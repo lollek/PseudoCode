@@ -91,7 +91,7 @@ class PseudoCode
       rule :expression do
         match(:bool_expr)
         match(:aritm_expr)
-        match(:func_exec)
+#       match(:func_exec)
       end
 
 #     rule :expression_list do
