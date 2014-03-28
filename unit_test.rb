@@ -4,7 +4,7 @@ require 'test/unit'
 require './pseudocode.rb'
 
 class TestPseudoCode < Test::Unit::TestCase
-  def test_tokens
+  def tokens
     pc = PseudoCode.new
     assert_equal(nil, pc.parse(""))
 
@@ -24,7 +24,7 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_equal("\"hej\"", pc.parse("write \"hej\""))
   end
 
-  def test_arithm_expr
+  def arithm_expr
     pc = PseudoCode.new
 
     # Addition
@@ -51,5 +51,35 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_equal(0, pc.parse("write 6 modulo 3 times 2"))
     assert_equal(20, pc.parse("write 6 times 3 plus 2"))
     assert_equal(12, pc.parse("write 6 plus 3 times 2"))
+  end
+
+  def test_bool_expr
+    pc = PseudoCode.new
+    
+    # not
+    assert_equal(false, pc.parse("write not true"))
+    assert_equal(true, pc.parse("write not false"))
+
+    # and
+    assert_equal(false, pc.parse("write false and true"))
+    assert_equal(false, pc.parse("write false and false"))
+    assert_equal(true, pc.parse("write true and true"))
+    assert_equal(false, pc.parse("write true and false"))
+
+    # or
+    assert_equal(true, pc.parse("write false or true"))
+    assert_equal(false, pc.parse("write false or false"))
+    assert_equal(true, pc.parse("write true or true"))
+    assert_equal(true, pc.parse("write true or false"))
+
+    # Complex
+    assert_equal(false, pc.parse("write (false and true) or false"))
+    assert_equal(false, pc.parse("write false and (true or false)"))
+    assert_equal(true, pc.parse("write (true and false) or true"))
+    assert_equal(true, pc.parse("write true and (false or true)"))
+    assert_equal(true, pc.parse("write false and true or false"))    
+    assert_equal(true, pc.parse("write false or true and false"))    
+    assert_equal(true, pc.parse("write false and true or false"))    
+    assert_equal(true, pc.parse("write false and true or false"))    
   end
 end

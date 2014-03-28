@@ -107,11 +107,10 @@ class PseudoCode
 #        match(:expression, 'is', :expression, 'or', 'less')
 #        match(:expression, 'is', 'between', :expression, 'and', :expression)
         # Tar ej arithm?
-#        match(:expression, 'and', :expression)
-#       match('not', :expression) { |e| not e } #TODO: Lägg till i grammatiken
-#       match(:expression, 'or', :expression) { |e,_,f| e || f }
-
-#       match('(', :expression, ')')
+        match(:bool, 'or', :bool_expr) { |e, _, f| e or f }
+        match(:bool_expr, 'and', :bool_expr) { |e, _, f| e and f }
+        match('not', :bool_expr) { |_, e| not e } #TODO: Lägg till i grammatiken
+        match('(', :bool_expr, ')') { |_, e, _| e }
         match(:bool) { |m| m }
       end
 
@@ -174,8 +173,8 @@ class PseudoCode
       end
 
       rule :bool do
+        match('false') { false }
         match('true') { true }
-        match('false')  { false }
       end
 
       rule :string do
