@@ -28,6 +28,28 @@ class TestPseudoCode < Test::Unit::TestCase
     pc = PseudoCode.new
 
     # Addition
-    assert_equal(2, pc.parse("write 1 plus 1"))
+    assert_equal(3, pc.parse("write 1 plus 2"))
+
+    # Subtraction
+    assert_equal(1, pc.parse("write 2 minus 1"))
+
+    # Times
+    assert_equal(6, pc.parse("write 2 times 3"))
+
+    # Divided by
+    assert_equal(3, pc.parse("write 6 divided by 2"))
+
+    # Modulo
+    assert_equal(2, pc.parse("write 6 modulo 4"))
+
+    # Complex
+    assert_equal(18, pc.parse("write (6 plus 3) times 2"))
+    assert_equal(12, pc.parse("write 6 plus 3 times 2"))
+    assert_equal(7, pc.parse("write 6 plus 3 modulo 2"))
+    assert_equal(-9, pc.parse("write 3 modulo 2 minus 10"))
+    assert_equal(6, pc.parse("write 6 times 3 modulo 2"))
+    assert_equal(0, pc.parse("write 6 modulo 3 times 2"))
+    assert_equal(20, pc.parse("write 6 times 3 plus 2"))
+    assert_equal(12, pc.parse("write 6 plus 3 times 2"))
   end
 end

@@ -89,8 +89,8 @@ class PseudoCode
 #     end
 
       rule :expression do
-        match(:bool_expr)
-        match(:aritm_expr)
+        match(:bool_expr) { |m| m }
+        match(:aritm_expr) { |m| m }
 #       match(:func_exec)
       end
 
@@ -116,22 +116,22 @@ class PseudoCode
       end
 
       rule :aritm_expr do
-        match(:term, 'plus', :expression)
-        match(:term, 'minus', :expression)
-        match(:term)
+        match(:term, 'plus', :aritm_expr) { |m, _, n| m + n }
+        match(:term, 'minus', :aritm_expr) { |m, _, n| m - n }
+        match(:term) { |m| m }
       end
 
       rule :term do
+        match(:factor, 'modulo', :term) { |a, _, b| a % b }
+        match(:factor, 'times', :term) { |a, _, b| a * b }
+        match(:factor, 'divided', 'by', :term) { |a, _, _, b| a / b }
         match(:factor) { |m| m }
-        match(:factor, 'times', :factor) { |a, _, b| a * b }
-        match(:factor, 'divided', 'by', :factor) { |a, _, _, b| a / b }
-        match(:factor, 'modulo', :factor) { |a, _, b| a % b }
       end
 
       rule :factor do
+        match('(', :aritm_expr, ')') { |_, m, _| m }
         match(:number) { |m| m}
         match(:variable_get) { |m| m}
-        match('(', :term, ')')
       end
 
 #     rule :func_decl do
