@@ -33,14 +33,14 @@ class PseudoCode
 #        match(:return_stmt) { |m| m }
       end
 
-      rule :assignment do
-        match(:variable_set, 'equals', :expression) { |var, _, val| @variables[var] = val } 
-        match('increase', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] += val } # +=
-        match('decrease', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] -= val } # -=
-        match('multiply', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] *= val } # *=
-        match('divide', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] /= val } # /=
+#     rule :assignment do
+#       match(:variable_set, 'equals', :expression) { |var, _, val| @variables[var] = val } 
+#       match('increase', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] += val } # +=
+#       match('decrease', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] -= val } # -=
+#       match('multiply', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] *= val } # *=
+#       match('divide', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] /= val } # /=
 #        match(:variable_set, 'holds', '\n', '\t', :expression_list, DEDENT) { |var, _, _, _, val| @variables[var] = val } # Work in progress
-      end
+#     end
 
       rule :output do
         match('write', :expression) { |_, m| print(m); m }
@@ -49,44 +49,44 @@ class PseudoCode
         match('write', :string) { |_, m| print(m); m }
       end
 
-      rule :input do
-        match('read', 'to', :variable_set)
-      end
+#     rule :input do
+#       match('read', 'to', :variable_set)
+#     end
 
-      rule :condition do
+#     rule :condition do
 #        match('if', :bool_expr, 'then', '\n', '\t', :statements, DEDENT, :condition_elseif, :condition_else) # work in progress
-      end
+#     end
       
-      rule :condition_elseif do
+#     rule :condition_elseif do
 #        match('else if', :bool_expr, 'then', '\n', '\t', :statements, DEDENT, :condition_elseif) # work in progress
-        match(:empty)
-      end
+#       match(:empty)
+#     end
 
-      rule :condition_else do
+#     rule :condition_else do
 #        match('else', '\n', '\t', :statements, DEDENT) # work in progress
-        match(:empty)
-      end
+#       match(:empty)
+#     end
 
-      rule :loop do
-        match(:foreach)
-        match(:while)
-      end
+#     rule :loop do
+#       match(:foreach)
+#       match(:while)
+#     end
 
-      rule :foreach do
+#     rule :foreach do
 #        match('for', 'each', :variable_set, 'in', :variable_get, 'do', '\n', '\t', :statements, DEDENT)
 #        match('for', 'each', :variable_set, :from, 'do', '\n', '\t', :statements, DEDENT)
-      end
+#     end
 
-      rule :while do
+#     rule :while do
 #        match('while', :bool_expr, 'do', '\n', '\t', :statements, DEDENT)
-      end
+#     end
 
-      rule :from do
-        match('from', :variable_get, 'to', :variable_get)
-        match('from', :variable_get, 'to', :integer)
-        match('from', :integer, 'to', :variable_get)
-        match('from', :integer, 'to', :integer)
-      end
+#     rule :from do
+#       match('from', :variable_get, 'to', :variable_get)
+#       match('from', :variable_get, 'to', :integer)
+#       match('from', :integer, 'to', :variable_get)
+#       match('from', :integer, 'to', :integer)
+#     end
 
       rule :expression do
         match(:bool_expr)
@@ -94,10 +94,10 @@ class PseudoCode
         match(:func_exec)
       end
 
-      rule :expression_list do
-        match(:expression, '\n', :expression_list)
-        match(:empty)
-      end
+#     rule :expression_list do
+#       match(:expression, '\n', :expression_list)
+#       match(:empty)
+#     end
 
       rule :bool_expr do
         # Tar ej bool?
@@ -108,10 +108,10 @@ class PseudoCode
 #        match(:expression, 'is', 'between', :expression, 'and', :expression)
         # Tar ej arithm?
 #        match(:expression, 'and', :expression)
-        match('not', :expression) { |e| not e } #TODO: Lägg till i grammatiken
-        match(:expression, 'or', :expression) { |e,_,f| e || f }
+#       match('not', :expression) { |e| not e } #TODO: Lägg till i grammatiken
+#       match(:expression, 'or', :expression) { |e,_,f| e || f }
 
-        match('(', :expression, ')')
+#       match('(', :expression, ')')
         match(:bool) { |m| m }
       end
 
@@ -134,27 +134,27 @@ class PseudoCode
         match('(', :term, ')')
       end
 
-      rule :func_decl do
- #       match(:func_name, :parameters, 'does', '\n', '\t', :statements, DEDENT) # work in progress
-      end
+#     rule :func_decl do
+#        match(:func_name, :parameters, 'does', '\n', '\t', :statements, DEDENT) # work in progress
+#     end
       
-      rule :func_exec do
-        match('do', :func_name, :parameters)
-      end
+#     rule :func_exec do
+#       match('do', :func_name, :parameters)
+#     end
 
-      rule :parameters do
-        match('with', :variable_list)
-        match(:empty)
-      end
+#     rule :parameters do
+#       match('with', :variable_list)
+#       match(:empty)
+#     end
 
-      rule :variable_list do
-        match(:variable_get)
-        match(:variable_get, ',', :variable_list)
-      end
+#     rule :variable_list do
+#       match(:variable_get)
+#       match(:variable_get, ',', :variable_list)
+#     end
 
-      rule :return_stmt do
-        match('return', :expression, '\n') { |_, m, _| m }
-      end
+#     rule :return_stmt do
+#       match('return', :expression, '\n') { |_, m, _| m }
+#     end
 
       rule :number do
         match(Float) { |m| m}
@@ -166,11 +166,11 @@ class PseudoCode
       end
 
       rule :variable_get do
-        match(:variable) { |m| raise "VARIABLE GET!" }# @variables[m] }
+        match(:variable) { |m| variables[m] }
       end
 
       rule :variable_set do
-        match(:variable) { |m| m }
+        match(:variable) { |m| variables[m] = m; m }
       end
 
       rule :bool do
