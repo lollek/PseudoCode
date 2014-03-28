@@ -7,7 +7,7 @@ class PseudoCode
     @parser = Parser.new("pseudo parser") do      
       token(/".*?"/) { |m| m.to_s }
       token(/\d+\.\d+/) {|m| m.to_f }
-      token(/\d+/) {|m| m.to_i }
+      token(/-?\d+/) {|m| m.to_i }
       token(/\w+/) {|m| m } # w kanske matchar för mycket..
       token(/[^ ]/) {|m| m }
       token(/./)
