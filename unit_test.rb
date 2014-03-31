@@ -55,6 +55,7 @@ class TestPseudoCode < Test::Unit::TestCase
 
   def test_bool_expr
     pc = PseudoCode.new
+    `mkfifo f`
     f = File.open("f", IO::NONBLOCK, IO::RDONLY)
     
     # not
@@ -99,15 +100,72 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_equal("false", f.read)
 
     # Comparison
+    ## Integers
     pc.parse("write 1 is less than 2")
+    assert_equal("true", f.read)
+    pc.parse("write 2 is less than 1")
+    assert_equal("false", f.read)
+    pc.parse("write 2 is greater than 1")
     assert_equal("true", f.read)
     pc.parse("write 1 is greater than 2")
     assert_equal("false", f.read)
     pc.parse("write 1 is between 10 and 0")
     assert_equal("true", f.read)
+    pc.parse("write 0 is between 10 and 1")
+    assert_equal("false", f.read)
     pc.parse("write 1 is 2 or less")
     assert_equal("true", f.read)
+    pc.parse("write 100 is 2 or less")
+    assert_equal("false", f.read)
     pc.parse("write 4 is 3 or more")
     assert_equal("true", f.read)
+    pc.parse("write 4 is 4 or more")
+    assert_equal("true", f.read)
+
+    ## Floats
+    pc.parse("write 1.0 is less than 2.0")
+    assert_equal("true", f.read)
+    pc.parse("write 2.0 is less than 1.00")
+    assert_equal("false", f.read)
+    pc.parse("write 2.0 is greater than 1.00")
+    assert_equal("true", f.read)
+    pc.parse("write 1.00 is greater than 2.0")
+    assert_equal("false", f.read)
+    pc.parse("write 1.00000 is between 10.0 and 0.0")
+    assert_equal("true", f.read)
+    pc.parse("write 0.0 is between 10.0 and 1.0")
+    assert_equal("false", f.read)
+    pc.parse("write 1.0 is 2.0 or less")
+    assert_equal("true", f.read)
+    pc.parse("write 100.00 is 2.0 or less")
+    assert_equal("false", f.read)
+    pc.parse("write 4.0 is 3.0 or more")
+    assert_equal("true", f.read)
+    pc.parse("write 4.0 is 4.0 or more")
+    assert_equal("true", f.read)
+
+    ## Float/Integer mix
+    pc.parse("write 1 is less than 2.0")
+    assert_equal("true", f.read)
+    pc.parse("write 2 is less than 1.00")
+    assert_equal("false", f.read)
+    pc.parse("write 2 is greater than 1.00")
+    assert_equal("true", f.read)
+    pc.parse("write 10 is greater than 2.0")
+    assert_equal("true", f.read)
+    pc.parse("write 1 is between 10.0 and 0.0")
+    assert_equal("true", f.read)
+    pc.parse("write 0 is between 10.0 and 1.0")
+    assert_equal("false", f.read)
+    pc.parse("write 1 is 2.0 or less")
+    assert_equal("true", f.read)
+    pc.parse("write 100 is 2.0 or less")
+    assert_equal("false", f.read)
+    pc.parse("write 4 is 3.0 or more")
+    assert_equal("true", f.read)
+    pc.parse("write 4 is 4.0 or more")
+    assert_equal("true", f.read)
+    
+    `rm f`
   end
 end
