@@ -13,7 +13,7 @@ class PseudoCode
       token(/./)
       
       start :program do 
-        match(:statements) { |statements| statements }#ProgramNode.new(statements) }
+        match(:statements) { |statements| ProgramNode.new([statements]).evaluate }
       end
       
       rule :statements do 
@@ -43,7 +43,7 @@ class PseudoCode
 #     end
 
       rule :output do
-        match('write', :expression) { |_, m| print(m); m }
+        match('write', :expression) { |_, m| WriteNode.new(m) }
         match('write', :number) { |_, m| print(m); m }
         match('write', :variable_get) { |_, m| print(m); m }
         match('write', :string) { |_, m| print(m); m }
@@ -101,17 +101,17 @@ class PseudoCode
 
       rule :bool_expr do
         # Tar ej bool?
-#        match(:expression, 'is', 'less', 'than', :expression)
-#        match(:expression, 'is', 'greater', 'than', :expression)
-#        match(:expression, 'is', :expression, 'or', 'more')
-#        match(:expression, 'is', :expression, 'or', 'less')
-#        match(:expression, 'is', 'between', :expression, 'and', :expression)
+#        match(:expression, 'is', 'less', 'than', :expression) { |e, _, _, _, f| e < f }
+#        match(:expression, 'is', 'greater', 'than', :expression) { |e, _, _, _, f| e > f }
+#        match(:expression, 'is', :expression, 'or', 'more') { |e, _, f, _, _| e >= f }
+#        match(:expression, 'is', :expression, 'or', 'less') { |e, _, f, _, _| e <= f }
+#        match(:expression, 'is', 'between', :expression, 'and', :expression) { |e, _, _, f, _, g| (e < f) and (e > g) }
         # Tar ej arithm?
-        match(:bool, 'or', :bool_expr) { |e, _, f| e or f }
-        match(:bool_expr, 'and', :bool_expr) { |e, _, f| e and f }
-        match('not', :bool_expr) { |_, e| not e } #TODO: Lägg till i grammatiken
-        match('(', :bool_expr, ')') { |_, e, _| e }
-        match(:bool) { |m| m }
+        match(:bool_expr, 'and', :bool_expr) { |e, _, f| BoolAndNode.new(e,f) }
+        match(:bool_expr, 'or', :bool_expr) { |e, _, f| BoolOrNode.new(e,f) }
+        match('not', :bool_expr) { |_, e| BoolNotNode.new(e) }
+        match('(', :bool_expr, ')') { |_, e, _| BoolNode.new(e) }
+        match(:bool) { |m| BoolNode.new(m) }
       end
 
       rule :aritm_expr do
@@ -211,5 +211,59 @@ class ProgramNode
 
   def evaluate
     @statements.each { |s| s.evaluate }
+    nil
+  end
+end
+
+class BoolNode
+  def initialize(value)
+    @value = value
+  end
+  def evaluate
+    if @value.class == TrueClass
+      true
+    elsif @value.class == FalseClass
+      false
+    else
+      @value.evaluate
+    end
+  end
+end
+
+class BoolOrNode
+  def initialize(lh, rh)
+    @lh= lh
+    @rh = rh
+  end
+  def evaluate
+    @lh.evaluate or @rh.evaluate
+  end
+end
+
+class BoolAndNode
+  def initialize(lh, rh)
+    @lh= lh
+    @rh = rh
+  end
+  def evaluate
+    @lh.evaluate and @rh.evaluate
+  end
+end
+
+class BoolNotNode
+  def initialize(value)
+    @value = value
+  end
+  def evaluate
+    @value.evaluate == false
+  end
+end
+
+class WriteNode
+  def initialize(value)
+    @value = value
+  end
+  def evaluate
+    File.open("f", "a") {|f| f.print @value.evaluate}
   end
 end

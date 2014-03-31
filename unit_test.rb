@@ -55,31 +55,43 @@ class TestPseudoCode < Test::Unit::TestCase
 
   def test_bool_expr
     pc = PseudoCode.new
+    f = File.open("f", IO::NONBLOCK, IO::RDONLY)
     
     # not
-    assert_equal(false, pc.parse("write not true"))
-    assert_equal(true, pc.parse("write not false"))
+    pc.parse("write not true")
+    assert_equal("false", f.read())
+    
+    pc.parse("write not false")
+    assert_equal("true", f.read())
 
     # and
-    assert_equal(false, pc.parse("write false and true"))
-    assert_equal(false, pc.parse("write false and false"))
-    assert_equal(true, pc.parse("write true and true"))
-    assert_equal(false, pc.parse("write true and false"))
+    pc.parse("write false and true")
+    assert_equal("false", f.read)
+    pc.parse("write false and false")
+    assert_equal("false", f.read)
+    pc.parse("write true and true")
+    assert_equal("true", f.read)
+    pc.parse("write true and false")
+    assert_equal("false", f.read)
 
     # or
-    assert_equal(true, pc.parse("write false or true"))
-    assert_equal(false, pc.parse("write false or false"))
-    assert_equal(true, pc.parse("write true or true"))
-    assert_equal(true, pc.parse("write true or false"))
+    pc.parse("write false or true")
+    assert_equal("true", f.read)
+    pc.parse("write false or false")
+    assert_equal("false", f.read)
+    pc.parse("write true or true")
+    assert_equal("true", f.read)
+    pc.parse("write true or false")
+    assert_equal("true", f.read)
 
     # Complex
-    assert_equal(false, pc.parse("write (false and true) or false"))
-    assert_equal(false, pc.parse("write false and (true or false)"))
-    assert_equal(true, pc.parse("write (true and false) or true"))
-    assert_equal(true, pc.parse("write true and (false or true)"))
-    assert_equal(true, pc.parse("write false and true or false"))    
-    assert_equal(true, pc.parse("write false or true and false"))    
-    assert_equal(true, pc.parse("write false and true or false"))    
-    assert_equal(true, pc.parse("write false and true or false"))    
+#    assert_equal(false, pc.parse("write (false and true) or false"))
+#    assert_equal(false, pc.parse("write false and (true or false)"))
+#    assert_equal(true, pc.parse("write (true and false) or true"))
+#    assert_equal(true, pc.parse("write true and (false or true)"))
+#    assert_equal(true, pc.parse("write false and true or false"))    
+#    assert_equal(true, pc.parse("write false or true and false"))    
+#    assert_equal(true, pc.parse("write false and true or false"))    
+#    assert_equal(true, pc.parse("write false and true or false"))    
   end
 end

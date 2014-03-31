@@ -19,7 +19,7 @@
 <loop>::=<foreach> | <while> 
 <foreach>::='for each' <variable> ('in' <variable> | <from>) 'do' NEWLINE INDENT <statements> DEDENT 
 <while>::='while' <bool_expr> 'do' NEWLINE INDENT <statements> DEDENT 
-<from>::='from' (<variable> | <integer>) 'to' (<variable> | <integer>) 
+<from>::='from' (<variable> | INTEGER) 'to' (<variable> | INTEGER) 
 <expression>::=<bool_expr> | <aritm_expr> | <func_exec> 
 <expression_list>::=(<expression> NEWLINE)*
 <bool_expr>::= 
@@ -28,9 +28,10 @@
 <expression> 'is between' <expression> 'and' <expression> | 
 <expression> 'and' <expression> | 
 <expression> 'or' <expression> |  
+'not' <expression> |
 '('<expression>')' | 
 <expression> | 
-<bool> 
+BOOLEAN 
 <aritm_expr>::=<term> ('plus' | 'minus') <expression> | <term> 
 <term>::=<factor> | <factor> 'times' <factor> | <factor> 'divided by' <factor> | <factor> 'modulo' <factor> 
 <factor>::=<number> | <variable> | '('<term>')' 
@@ -39,11 +40,7 @@
 <parameters>::='with' <variable_list> | <empty>
 <variable_list>::=<variable>(',' <variable>)*
 <return_stmt>::='return' <expression> NEWLINE 
-<number>::=<float> | <integer>
-
-<integer>::=/\d+/
-<float>::=/\d+\.\d+/
-<variable>::=/[a-zA-Z]+/
-<bool>::='true' | 'false' 
+<number>::=FLOAT | INTEGER
+<variable>::=/^[a-zA-Z]+$/
 <comment>::=/#.*/ NEWLINE
-<empty>::= //
+<empty>::= /^$/
