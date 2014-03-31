@@ -5,63 +5,95 @@ require './pseudocode.rb'
 
 class TestPseudoCode < Test::Unit::TestCase
   def tokens
+    `mkfifo f`
+    f = File.open("f", IO::NONBLOCK, IO::RDONLY)
     pc = PseudoCode.new
-    assert_equal(nil, pc.parse(""))
+
+    pc.parse("")
+    assert_equal("", f.read)
 
     # Floats
-    assert_equal(1.2, pc.parse("write 1.2"))
-    assert_equal(-1.2, pc.parse("write -1.2"))
+    pc.parse("write 1.2")
+    assert_equal("1.2", f.read)
+    pc.parse("write -1.2")
+    assert_equal("-1.2", f.read)
 
     # Integers
-    assert_equal(1, pc.parse("write 1"))
-    assert_equal(-1, pc.parse("write -1"))
+    pc.parse("write 1")
+    assert_equal("1", f.read)
+    pc.parse("write -1")
+    assert_equal("-1", f.read)
 
     # Booleans
-    assert_equal(true, pc.parse("write true"))
-    assert_equal(false, pc.parse("write false"))
+    pc.parse("write true")
+    assert_equal("true", f.read)
+    pc.parse("write false")
+    assert_equal("false", f.read)
 
     # Strings
-    assert_equal("\"hej\"", pc.parse("write \"hej\""))
+    pc.parse("write \"hej\"")
+    assert_equal("\"hej\"", f.read)
+
+    `rm f`
   end
 
   def arithm_expr
+    `mkfifo f`
+    f = File.open("f", IO::NONBLOCK, IO::RDONLY)
+
     pc = PseudoCode.new
 
     # Addition
-    assert_equal(3, pc.parse("write 1 plus 2"))
+    pc.parse("write 1 plus 2")
+    assert_equal("3", f.read)
 
     # Subtraction
-    assert_equal(1, pc.parse("write 2 minus 1"))
+    pc.parse("write 2 minus 1")
+    assert_equal("1", f.read)
 
     # Times
-    assert_equal(6, pc.parse("write 2 times 3"))
+    pc.parse("write 2 times 3")
+    assert_equal("6", f.read)
 
     # Divided by
-    assert_equal(3, pc.parse("write 6 divided by 2"))
+    pc.parse("write 6 divided by 2")
+    assert_equal("3", f.read)
 
     # Modulo
-    assert_equal(2, pc.parse("write 6 modulo 4"))
+    pc.parse("write 6 modulo 4")
+    assert_equal("2", f.read)
 
     # Complex
-    assert_equal(18, pc.parse("write (6 plus 3) times 2"))
-    assert_equal(12, pc.parse("write 6 plus 3 times 2"))
-    assert_equal(7, pc.parse("write 6 plus 3 modulo 2"))
-    assert_equal(-9, pc.parse("write 3 modulo 2 minus 10"))
-    assert_equal(6, pc.parse("write 6 times 3 modulo 2"))
-    assert_equal(0, pc.parse("write 6 modulo 3 times 2"))
-    assert_equal(20, pc.parse("write 6 times 3 plus 2"))
-    assert_equal(12, pc.parse("write 6 plus 3 times 2"))
+    pc.parse("write (6 plus 3) times 2")
+    assert_equal("18", f.read)
+    pc.parse("write 6 plus 3 times 2")
+    assert_equal("12", f.read)
+    pc.parse("write 6 plus 3 modulo 2")
+    assert_equal("7", f.read)
+    pc.parse("write 3 modulo 2 minus 10")
+    assert_equal("-9", f.read)
+    pc.parse("write 6 times 3 modulo 2")
+    assert_equal("6", f.read)
+    pc.parse("write 6 modulo 3 times 2")
+    assert_equal("0", f.read)
+    pc.parse("write 6 times 3 plus 2")
+    assert_equal("20", f.read)
+    pc.parse("write 6 plus 3 times 2")
+    assert_equal("12", f.read)
+
+    f.close
+    `rm f`
   end
 
-  def test_bool_expr
+  def bool_expr
     pc = PseudoCode.new
     `mkfifo f`
     f = File.open("f", IO::NONBLOCK, IO::RDONLY)
-    
+
     # not
     pc.parse("write not true")
     assert_equal("false", f.read())
-    
+
     pc.parse("write not false")
     assert_equal("true", f.read())
 
@@ -165,7 +197,8 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_equal("true", f.read)
     pc.parse("write 4 is 4.0 or more")
     assert_equal("true", f.read)
-    
+
+    f.close
     `rm f`
   end
 end
