@@ -97,5 +97,17 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_equal("false", f.read)
     pc.parse("write false or true and false")
     assert_equal("false", f.read)
+
+    # Comparison
+    pc.parse("write 1 is less than 2")
+    assert_equal("true", f.read)
+    pc.parse("write 1 is greater than 2")
+    assert_equal("false", f.read)
+    pc.parse("write 1 is between 10 and 0")
+    assert_equal("true", f.read)
+    pc.parse("write 1 is 2 or less")
+    assert_equal("true", f.read)
+    pc.parse("write 4 is 3 or more")
+    assert_equal("true", f.read)
   end
 end

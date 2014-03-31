@@ -44,9 +44,9 @@ class PseudoCode
 
       rule :output do
         match('write', :expression) { |_, m| WriteNode.new(m) }
-        match('write', :number) { |_, m| print(m); m }
-        match('write', :variable_get) { |_, m| print(m); m }
-        match('write', :string) { |_, m| print(m); m }
+        match('write', :number) { |_, m| WriteNode.new(m) }
+        match('write', :variable_get) { |_, m| WriteNode.new(m) }
+        match('write', :string) { |_, m| WriteNode.new(m) }
       end
 
 #     rule :input do
@@ -101,11 +101,11 @@ class PseudoCode
 
       rule :bool_expr do
         # Tar ej bool?
-#        match(:expression, 'is', 'less', 'than', :expression) { |e, _, _, _, f| e < f }
-#        match(:expression, 'is', 'greater', 'than', :expression) { |e, _, _, _, f| e > f }
-#        match(:expression, 'is', :expression, 'or', 'more') { |e, _, f, _, _| e >= f }
-#        match(:expression, 'is', :expression, 'or', 'less') { |e, _, f, _, _| e <= f }
-#        match(:expression, 'is', 'between', :expression, 'and', :expression) { |e, _, _, f, _, g| (e < f) and (e > g) }
+        match(:aritm_expr, 'is', 'less', 'than', :aritm_expr) { |e, _, _, _, f| ComparisonNode.new(e,'<',f) }
+        match(:aritm_expr, 'is', 'greater', 'than', :aritm_expr) { |e, _, _, _, f| ComparisonNode.new(e, '>', f) }
+        match(:aritm_expr, 'is', :aritm_expr, 'or', 'more') { |e, _, f, _, _| ComparisonNode.new(e, '>=', f) }
+        match(:aritm_expr, 'is', :aritm_expr, 'or', 'less') { |e, _, f, _, _| ComparisonNode.new(e, '<=', f) }
+        match(:aritm_expr, 'is', 'between', :aritm_expr, 'and', :aritm_expr) { |e, _, _, f, _, g| ComparisonNode.new(f, 'between', g, e) }
         # Tar ej arithm?
         match(:bool_expr, 'and', :bool_expr) { |e, _, f| BoolAndNode.new(e,f) }
         match(:bool_expr, 'or', :bool_expr) { |e, _, f| BoolOrNode.new(e,f) }
@@ -215,22 +215,23 @@ class ProgramNode
   end
 end
 
-class BoolNode
+class SuperNode
+end
+
+class BoolNode < SuperNode
   def initialize(value)
     @value = value
   end
   def evaluate
-    if @value.class == TrueClass
-      true
-    elsif @value.class == FalseClass
-      false
-    else
+    if @value.class.superclass == SuperNode
       @value.evaluate
+    else
+      @value
     end
   end
 end
 
-class BoolOrNode
+class BoolOrNode < SuperNode
   def initialize(lh, rh)
     @lh= lh
     @rh = rh
@@ -240,7 +241,7 @@ class BoolOrNode
   end
 end
 
-class BoolAndNode
+class BoolAndNode < SuperNode
   def initialize(lh, rh)
     @lh= lh
     @rh = rh
@@ -250,7 +251,7 @@ class BoolAndNode
   end
 end
 
-class BoolNotNode
+class BoolNotNode < SuperNode
   def initialize(value)
     @value = value
   end
@@ -259,11 +260,30 @@ class BoolNotNode
   end
 end
 
-class WriteNode
+class WriteNode < SuperNode
   def initialize(value)
     @value = value
   end
   def evaluate
-    File.open("f", "a") {|f| f.print @value.evaluate}
+    File.open("f", "a") {|f| f.print @value.class.superclass == SuperNode ? @value.evaluate : @value }
+  end
+end
+
+class ComparisonNode < SuperNode
+  def initialize(lh, op, rh, middle=nil)
+    @lh = lh
+    @op = op
+    @rh = rh
+    @middle = middle
+  end
+  def evaluate
+    case @op
+    when '<' then @lh < @rh
+    when '>' then @lh > @rh
+    when '<=' then @lh <= @rh
+    when '>=' then @lh >= @rh
+    when 'between' then @middle.between?([@lh,@rh].min, [@lh, @rh].max)
+    when '==' then @lh == @rh
+    end
   end
 end
