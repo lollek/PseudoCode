@@ -85,13 +85,17 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_equal("true", f.read)
 
     # Complex
-#    assert_equal(false, pc.parse("write (false and true) or false"))
-#    assert_equal(false, pc.parse("write false and (true or false)"))
-#    assert_equal(true, pc.parse("write (true and false) or true"))
-#    assert_equal(true, pc.parse("write true and (false or true)"))
-#    assert_equal(true, pc.parse("write false and true or false"))    
-#    assert_equal(true, pc.parse("write false or true and false"))    
-#    assert_equal(true, pc.parse("write false and true or false"))    
-#    assert_equal(true, pc.parse("write false and true or false"))    
+    pc.parse("write (false and true) or false")
+    assert_equal("false", f.read)
+    pc.parse("write false and (true or false)")
+    assert_equal("false", f.read)
+    pc.parse("write (true and false) or true")
+    assert_equal("true", f.read)
+    pc.parse("write true and (false or true)")
+    assert_equal("true", f.read)
+    pc.parse("write false and true or false")
+    assert_equal("false", f.read)
+    pc.parse("write false or true and false")
+    assert_equal("false", f.read)
   end
 end
