@@ -116,15 +116,15 @@ class PseudoCode
       end
 
       rule :aritm_expr do
-        match(:term, 'plus', :aritm_expr) { |m, _, n| m + n }
-        match(:term, 'minus', :aritm_expr) { |m, _, n| m - n }
+        match(:term, 'plus', :aritm_expr) { |m, _, n| ArithmNode.new(m, '+', n) }
+        match(:term, 'minus', :aritm_expr) { |m, _, n| ArithmNode.new(m, '-', n) }
         match(:term) { |m| m }
       end
 
       rule :term do
-        match(:factor, 'modulo', :term) { |a, _, b| a % b }
-        match(:factor, 'times', :term) { |a, _, b| a * b }
-        match(:factor, 'divided', 'by', :term) { |a, _, _, b| a / b }
+        match(:factor, 'modulo', :term) { |a, _, b| ArithmNode.new(a, '%', b) }
+        match(:factor, 'times', :term) { |a, _, b| ArithmNode.new(a, '*', b) }
+        match(:factor, 'divided', 'by', :term) { |a, _, _, b| ArithmNode.new(a, '/', b) }
         match(:factor) { |m| m }
       end
 
