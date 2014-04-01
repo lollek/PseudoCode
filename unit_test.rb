@@ -228,6 +228,14 @@ class TestPseudoCode < Test::Unit::TestCase
     # Raises ERROR
 #    pc.parse("testVar equals testVarABC plus 1\nwrite testVar")
 #    assert_equal("5", f.read)
+    pc.parse("testVar equals 0\nincrease testVar by 4\nwrite testVar")
+    assert_equal("4", f.read)
+    pc.parse("testVar equals 0\ndecrease testVar by 4\nwrite testVar")
+    assert_equal("-4", f.read)
+    pc.parse("testVar equals 2\nmultiply testVar by 4\nwrite testVar")
+    assert_equal("8", f.read)
+    pc.parse("testVar equals 8\ndivide testVar by 4\nwrite testVar")
+    assert_equal("2", f.read)
 
     f.close
     `rm f`

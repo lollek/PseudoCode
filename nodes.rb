@@ -17,13 +17,23 @@ class ProgramNode < SuperNode
 end
 
 class AssignmentNode < SuperNode
-  def initialize(name, value)
-    @name, @value = name, value        
+  def initialize(name, value, op=nil)
+    @name, @value, @op = name, value, op       
   end
 
   def evaluate
     @value = @value.evaluate if @value.class.superclass == SuperNode
-    @@variables[@name] = @value
+    if @op != nil and not @@variables.include? @name
+      raise "ERROR: Variable does not exist!"
+    end
+    case @op
+    when nil then @@variables[@name] = @value
+    when '+=' then @@variables[@name] += @value
+    when '-=' then @@variables[@name] -= @value
+    when '*=' then @@variables[@name] *= @value
+    when '/=' then @@variables[@name] /= @value
+    when 'array' then @@variables[@name] = @value.map { |a| @value.class.superclass == SuperNode ? a.evaluate : a }
+    end
   end
 end
 

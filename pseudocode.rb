@@ -37,11 +37,11 @@ class PseudoCode
 
      rule :assignment do
         match(:variable_set, 'equals', :expression) { |name, _, value| AssignmentNode.new(name, value) } 
-#        match('increase', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] += val } # +=
-#        match('decrease', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] -= val } # -=
-#        match('multiply', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] *= val } # *=
-#        match('divide', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] /= val } # /=
-#        match(:variable_set, 'holds', '\n', '\t', :expression_list, DEDENT) { |var, _, _, _, val| @variables[var] = val } # Work in progress
+        match('increase', :variable_set, 'by', :expression) { |_, name, _, value| AssignmentNode.new(name, value, '+=') } # +=
+        match('decrease', :variable_set, 'by', :expression) {  |_, name, _, value| AssignmentNode.new(name, value, '-=') } # -=
+        match('multiply', :variable_set, 'by', :expression) {  |_, name, _, value| AssignmentNode.new(name, value, '*=') } # *=
+        match('divide', :variable_set, 'by', :expression) {  |_, name, _, value| AssignmentNode.new(name, value, '/=') } # /=
+        match(:variable_set, 'holds', :expression_list) { |name, _, value| AssignmentNode.new(name, value, 'array') } # Work in progress
      end
 
       rule :output do
@@ -97,10 +97,10 @@ class PseudoCode
 #       match(:func_exec)
       end
 
-#     rule :expression_list do
-#       match(:expression, '\n', :expression_list)
-#       match(:empty)
-#     end
+      rule :expression_list do
+        match(:expression, ',', :expression_list) { |a, _, b| [a] + b }
+        match(:expression) { |m| [m] }
+      end
 
       rule :bool_expr do
         # Tar ej bool?
