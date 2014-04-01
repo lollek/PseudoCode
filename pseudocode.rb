@@ -1,22 +1,23 @@
 # -*- coding: utf-8 -*-
 require './rdparse.rb'
+require './nodes.rb'
 
 class PseudoCode
   def initialize
     variables = {}
-    @parser = Parser.new("pseudo parser") do      
-      token(/".*?"/) { |m| m.to_s }
-      token(/-?\d+\.\d+/) {|m| m.to_f }
-      token(/-?\d+/) {|m| m.to_i }
-      token(/\w+/) {|m| m } # w kanske matchar för mycket..
-      token(/[^ ]/) {|m| m }
+    @parser = Parser.new("pseudo parser") do
+      token(/".*?"/)      { |m| m.to_s } # Strings
+      token(/-?\d+\.\d+/) { |m| m.to_f } # Floats
+      token(/-?\d+/)      { |m| m.to_i } # Integers
+      token(/\w+/)        { |m| m } # Variables, keywords, etc
+      token(/[^ ]/)       { |m| m } # Non-space characters
       token(/./)
-      
+
       start :program do 
         match(:statements) { |statements| ProgramNode.new([statements]).evaluate }
       end
-      
-      rule :statements do 
+
+      rule :statements do
         match(:statement) { |a| a }#, :statements) { |a, b| a + b }
         match(:empty) { [] }
       end
@@ -130,7 +131,7 @@ class PseudoCode
       rule :factor do
         match('(', :aritm_expr, ')') { |_, m, _| m }
         match(:number) { |m| m}
-        match(:variable_get) { |m| m}
+        match(:variable_get) { |m| "Not implemented"}
       end
 
 #     rule :func_decl do
@@ -159,7 +160,7 @@ class PseudoCode
         match(Float) { |m| m}
         match(Integer) { |m| m}
       end
-      
+
       rule :variable do
         match(/^[a-zA-Z]+$/) { |m| m }
       end
@@ -204,86 +205,3 @@ class PseudoCode
   end
 end
 
-class ProgramNode
-  def initialize(statements)
-    @statements = statements
-  end
-
-  def evaluate
-    @statements.each { |s| s.evaluate }
-    nil
-  end
-end
-
-class SuperNode
-end
-
-class BoolNode < SuperNode
-  def initialize(value)
-    @value = value
-  end
-  def evaluate
-    if @value.class.superclass == SuperNode
-      @value.evaluate
-    else
-      @value
-    end
-  end
-end
-
-class BoolOrNode < SuperNode
-  def initialize(lh, rh)
-    @lh= lh
-    @rh = rh
-  end
-  def evaluate
-    @lh.evaluate or @rh.evaluate
-  end
-end
-
-class BoolAndNode < SuperNode
-  def initialize(lh, rh)
-    @lh= lh
-    @rh = rh
-  end
-  def evaluate
-    @lh.evaluate and @rh.evaluate
-  end
-end
-
-class BoolNotNode < SuperNode
-  def initialize(value)
-    @value = value
-  end
-  def evaluate
-    @value.evaluate == false
-  end
-end
-
-class WriteNode < SuperNode
-  def initialize(value)
-    @value = value
-  end
-  def evaluate
-    File.open("f", "a") {|f| f.print @value.class.superclass == SuperNode ? @value.evaluate : @value }
-  end
-end
-
-class ComparisonNode < SuperNode
-  def initialize(lh, op, rh, middle=nil)
-    @lh = lh
-    @op = op
-    @rh = rh
-    @middle = middle
-  end
-  def evaluate
-    case @op
-    when '<' then @lh < @rh
-    when '>' then @lh > @rh
-    when '<=' then @lh <= @rh
-    when '>=' then @lh >= @rh
-    when 'between' then @middle.between?([@lh,@rh].min, [@lh, @rh].max)
-    when '==' then @lh == @rh
-    end
-  end
-end
