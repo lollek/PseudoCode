@@ -202,13 +202,32 @@ class TestPseudoCode < Test::Unit::TestCase
     `rm f`
   end
 
-  def test_stmts
+  def stmts
     pc = PseudoCode.new
     `mkfifo f`
     f = File.open("f", IO::NONBLOCK, IO::RDONLY)
 
     pc.parse("write 1 plus 43\nwrite 4 minus 3")
     assert_equal('441', f.read)
+
+    f.close
+    `rm f`
+  end
+
+  def test_variables
+    pc = PseudoCode.new
+    `mkfifo f`
+    f = File.open("f", IO::NONBLOCK, IO::RDONLY)
+
+    pc.parse("testVar equals 4 plus 1\nwrite testVar")
+    assert_equal("5", f.read)
+    pc.parse("testVar equals 4 plus 1\ntestVar equals testVar plus 1\nwrite testVar")
+    assert_equal("6", f.read)
+    pc.parse("testVar equals true or false\nwrite testVar")
+    assert_equal("true", f.read)
+    # Raises ERROR
+#    pc.parse("testVar equals testVarABC plus 1\nwrite testVar")
+#    assert_equal("5", f.read)
 
     f.close
     `rm f`

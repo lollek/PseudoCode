@@ -1,6 +1,7 @@
 class SuperNode
   def initialize value
     @value = value
+    @@variables = {}
   end
 end
 
@@ -10,11 +11,34 @@ class ProgramNode < SuperNode
   end
 
   def evaluate
-    @statements.each { |s| s.evaluate }
+    @statements.each { |s| s.evaluate}
     nil
   end
 end
 
+class AssignmentNode < SuperNode
+  def initialize(name, value)
+    @name, @value = name, value        
+  end
+
+  def evaluate
+    @value = @value.evaluate if @value.class.superclass == SuperNode
+    @@variables[@name] = @value
+  end
+end
+
+class LookupNode < SuperNode
+  def initialize(name)
+    @name = name
+  end
+
+  def evaluate
+    if not @@variables.include? @name
+      raise "ERROR: Variable does not exist!"
+    end
+    @@variables[@name]
+  end
+end
 
 class BoolNode < SuperNode
   def evaluate

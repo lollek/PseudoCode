@@ -4,7 +4,6 @@ require './nodes.rb'
 
 class PseudoCode
   def initialize
-    variables = {}
     @parser = Parser.new("pseudo parser") do
       token(/".*?"/)      { |m| m.to_s } # Strings
       token(/-?\d+\.\d+/) { |m| m.to_f } # Floats
@@ -25,7 +24,7 @@ class PseudoCode
 
       rule :statement do
         match(:output) { |m| m }
-#        match(:assignment) { |m| m }
+        match(:assignment) { |m| m }
 #        match(:input) { |m| m }
 #        match(:condition) { |m| m }
 #        match(:loop) { |m| m }
@@ -36,14 +35,14 @@ class PseudoCode
         match(:newline) { [] }
       end
 
-#     rule :assignment do
-#       match(:variable_set, 'equals', :expression) { |var, _, val| @variables[var] = val } 
-#       match('increase', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] += val } # +=
-#       match('decrease', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] -= val } # -=
-#       match('multiply', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] *= val } # *=
-#       match('divide', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] /= val } # /=
+     rule :assignment do
+        match(:variable_set, 'equals', :expression) { |name, _, value| AssignmentNode.new(name, value) } 
+#        match('increase', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] += val } # +=
+#        match('decrease', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] -= val } # -=
+#        match('multiply', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] *= val } # *=
+#        match('divide', :variable_set, 'by', :expression) { |_, var, _, val| @variables[var] /= val } # /=
 #        match(:variable_set, 'holds', '\n', '\t', :expression_list, DEDENT) { |var, _, _, _, val| @variables[var] = val } # Work in progress
-#     end
+     end
 
       rule :output do
         match('write', :expression) { |_, m| WriteNode.new(m) }
@@ -94,6 +93,7 @@ class PseudoCode
       rule :expression do
         match(:bool_expr) { |m| m }
         match(:aritm_expr) { |m| m }
+        match(:variable_get) { |m| m }
 #       match(:func_exec)
       end
 
@@ -133,7 +133,7 @@ class PseudoCode
       rule :factor do
         match('(', :aritm_expr, ')') { |_, m, _| m }
         match(:number) { |m| m}
-        match(:variable_get) { |m| "Not implemented"}
+        match(:variable_get) { |m| m }
       end
 
 #     rule :func_decl do
@@ -168,11 +168,11 @@ class PseudoCode
       end
 
       rule :variable_get do
-        match(:variable) { |m| variables[m] }
+        match(:variable) { |m| LookupNode.new(m) }
       end
 
       rule :variable_set do
-        match(:variable) { |m| variables[m] = m; m }
+        match(:variable) { |m| m }
       end
 
       rule :bool do
@@ -181,7 +181,7 @@ class PseudoCode
       end
 
       rule :string do
-        match(String) { |m| m }
+        match(/".*"/) { |m| m.to_s[1..-2] }
       end
 
       rule :comment do
