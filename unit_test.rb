@@ -32,7 +32,7 @@ class TestPseudoCode < Test::Unit::TestCase
 
     # Strings
     pc.parse("write \"hej\"")
-    assert_equal("\"hej\"", f.read)
+    assert_equal("hej", f.read)
 
     `rm f`
   end
@@ -214,7 +214,7 @@ class TestPseudoCode < Test::Unit::TestCase
     `rm f`
   end
 
-  def test_variables
+  def variables
     pc = PseudoCode.new
     `mkfifo f`
     f = File.open("f", IO::NONBLOCK, IO::RDONLY)
