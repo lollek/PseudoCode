@@ -1,2 +1,2 @@
 #! /bin/bash
-tail -n 6 <(sed 's/def /def test_/' unit_test.rb | ruby)
+sed 's/def /def test_/' unit_test.rb | ruby

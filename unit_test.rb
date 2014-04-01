@@ -201,4 +201,16 @@ class TestPseudoCode < Test::Unit::TestCase
     f.close
     `rm f`
   end
+
+  def test_stmts
+    pc = PseudoCode.new
+    `mkfifo f`
+    f = File.open("f", IO::NONBLOCK, IO::RDONLY)
+
+    pc.parse("write 1 plus 43\nwrite 4 minus 3")
+    assert_equal('441', f.read)
+
+    f.close
+    `rm f`
+  end
 end

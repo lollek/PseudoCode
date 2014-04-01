@@ -10,16 +10,17 @@ class PseudoCode
       token(/-?\d+\.\d+/) { |m| m.to_f } # Floats
       token(/-?\d+/)      { |m| m.to_i } # Integers
       token(/\w+/)        { |m| m } # Variables, keywords, etc
+      token(/\n/)         { :newline } # Newline
       token(/[^ ]/)       { |m| m } # Non-space characters
       token(/./)
 
       start :program do 
-        match(:statements) { |statements| ProgramNode.new([statements]).evaluate }
+        match(:statements) { |statements| ProgramNode.new(statements).evaluate }
       end
 
       rule :statements do
-        match(:statement) { |a| a }#, :statements) { |a, b| a + b }
-        match(:empty) { [] }
+        match(:statement, :statements) { |a, b| [a] + b.flatten }
+        match(:statement) { |m| [m] }
       end
 
       rule :statement do
@@ -32,6 +33,7 @@ class PseudoCode
 #        match(:func_decl) { |m| m }
 #        match(:func_exec) { |m| m }
 #        match(:return_stmt) { |m| m }
+        match(:newline) { [] }
       end
 
 #     rule :assignment do
