@@ -122,6 +122,7 @@ class Parser
   
   # Tokenize the string into small pieces
   def tokenize(string)
+    indentation = 0
     @tokens = []
     @string = string.clone
     until string.empty?
@@ -137,6 +138,17 @@ class Parser
           @tokens << tok.block.call(match.to_s) if tok.block
           # consume the match and proceed with the rest of the string
           string = match.post_match
+
+          # check indentation and generate tokens if necessary
+          if tok.pattern == /\A\n/
+            new_indentation = /\A */.match(string)[0].length
+            if new_indentation < indentation
+              @tokens << :dedent
+            elsif new_indentation > indentation
+              @tokens << :indent
+            end
+            indentation = new_indentation
+          end
           true
         else
           # this token pattern did not match, try the next

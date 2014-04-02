@@ -9,7 +9,7 @@ class PseudoCode
       token(/-?\d+\.\d+/) { |m| m.to_f } # Floats
       token(/-?\d+/)      { |m| m.to_i } # Integers
       token(/\w+/)        { |m| m } # Variables, keywords, etc
-      token(/\n/)         { :newline } # Newline
+      token(/\n/)         { :newline } # Newline, this also causes the lexer to generate :indent and :dedent tokens
       token(/[^ ]/)       { |m| m } # Non-space characters
       token(/./)
 
