@@ -1,2 +1,6 @@
 #! /bin/bash
-sed 's/def /def test_/' unit_test.rb | ruby
+if [[ $1 == "-v" ]]; then
+  sed -r 's:def ([a-zA-Z_]+\s*$):def test_\1:' unit_test.rb | ruby
+else
+  sed -r 's:def ([a-zA-Z_]+\s*$):def test_\1:' unit_test.rb | ruby | tail -n 6
+fi
