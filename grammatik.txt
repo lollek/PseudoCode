@@ -1,45 +1,45 @@
-<program>::=<statements> 
-<statements>::=<statements><statement> | <empty> 
-<statement>::= 
-(<assignment> | <output> | <input> | <condition> | <loop> | 
- <expression> | <func_decl> |<func_exec> | <return_stmt>) NEWLINE 
-<assignment>::= 
-<variable> 'equals' <expression> | 
-'increase' <variable> 'by' <expression> |  
-'decrease' <variable> 'by' <expression> | 
-'multiply' <variable> 'by' <expression> |  
-'divide' <variable> 'by' <expression> | 
-<variable> 'holds' NEWLINE INDENT <expression_list> DEDENT 
-<output>::='write' (<variable> | <expression> | <string> | <number>) 
+<program>::=<statements>
+<statements>::=<statements><statement> | <empty>
+<statement>::=
+  (<assignment> | <output> | <input> | <condition> | <loop> |
+   <expression> | <func_decl> |<func_exec> | <return_stmt>) NEWLINE
+<assignment>::=
+  <variable> 'equals' <expression> |
+  'increase' <variable> 'by' <expression> |
+  'decrease' <variable> 'by' <expression> |
+  'multiply' <variable> 'by' <expression> |
+  'divide' <variable> 'by' <expression> |
+  <variable> 'holds' NEWLINE INDENT <expression_list> DEDENT
+<output>::='write' (<variable> | <expression> | <string> | <number>)
 <input>::='read to' <variable>
-<condition>::= 
-'if' <bool_expr> 'then' NEWLINE INDENT <statements> DEDENT 
-('else  if' <bool_expr> 'then' NEWLINE INDENT <statements> DEDENT)* 
-['else' NEWLINE INDENT <statements> DEDENT] 
-<loop>::=<foreach> | <while> 
-<foreach>::='for each' <variable> ('in' <variable> | <from>) 'do' NEWLINE INDENT <statements> DEDENT 
-<while>::='while' <bool_expr> 'do' NEWLINE INDENT <statements> DEDENT 
-<from>::='from' (<variable> | INTEGER) 'to' (<variable> | INTEGER) 
-<expression>::=<bool_expr> | <aritm_expr> | <func_exec> 
+<condition>::=
+  'if' <bool_expr> 'then' NEWLINE INDENT <statements> DEDENT
+  ('else  if' <bool_expr> 'then' NEWLINE INDENT <statements> DEDENT)*
+  ['else' NEWLINE INDENT <statements> DEDENT]
+<loop>::=<foreach> | <while>
+<foreach>::='for each' <variable> ('in' <variable> | <from>) 'do' NEWLINE INDENT <statements> DEDENT
+<while>::='while' <bool_expr> 'do' NEWLINE INDENT <statements> DEDENT
+<from>::='from' (<variable> | INTEGER) 'to' (<variable> | INTEGER)
+<expression>::=<bool_expr> | <aritm_expr> | <func_exec>
 <expression_list>::=(<expression> NEWLINE)*
-<bool_expr>::= 
-<expression> 'is' (less than | greater than) <expression> | 
-<expression> 'is' <expression> 'or' (more | less) | 
-<expression> 'is between' <expression> 'and' <expression> | 
-<expression> 'and' <expression> | 
-<expression> 'or' <expression> |  
-'not' <expression> |
-'('<expression>')' | 
-<expression> | 
-BOOLEAN 
-<aritm_expr>::=<term> ('plus' | 'minus') <expression> | <term> 
-<term>::=<factor> | <factor> 'times' <factor> | <factor> 'divided by' <factor> | <factor> 'modulo' <factor> 
-<factor>::=<number> | <variable> | '('<term>')' 
-<func_decl>::=<func_name> <parameters> 'does' NEWLINE INDENT <statements> DEDENT 
+<bool_expr>::=
+  <expression> 'is' (less than | greater than) <expression> |
+  <expression> 'is' <expression> 'or' (more | less) |
+  <expression> 'is between' <expression> 'and' <expression> |
+  <expression> 'and' <expression> |
+  <expression> 'or' <expression> |
+  'not' <expression> |
+  '('<expression>')' |
+  <expression> |
+  BOOLEAN
+<aritm_expr>::=<term> ('plus' | 'minus') <expression> | <term>
+<term>::=<factor> | <factor> 'times' <factor> | <factor> 'divided by' <factor> | <factor> 'modulo' <factor>
+<factor>::=<number> | <variable> | '('<term>')'
+<func_decl>::=<func_name> <parameters> 'does' NEWLINE INDENT <statements> DEDENT
 <func_exec>::='do' <func_name> <parameters>
 <parameters>::='with' <variable_list> | <empty>
 <variable_list>::=<variable>(',' <variable>)*
-<return_stmt>::='return' <expression> NEWLINE 
+<return_stmt>::='return' <expression> NEWLINE
 <number>::=FLOAT | INTEGER
 <variable>::=/^[a-zA-Z]+$/
 <comment>::=/#.*/ NEWLINE
