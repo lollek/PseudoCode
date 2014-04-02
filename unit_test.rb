@@ -4,240 +4,148 @@ require 'test/unit'
 require './pseudocode.rb'
 
 class TestPseudoCode < Test::Unit::TestCase
-  def tokens
-    `mkfifo f`
-    f = File.open("f", IO::NONBLOCK, IO::RDONLY)
-    pc = PseudoCode.new
+  def initialize(arg)
+    `mkfifo f` unless File.exists? "f"
+    @fifo = File.open("f", IO::NONBLOCK, IO::RDONLY)
+    @pc = PseudoCode.new
+    super(arg)
+  end
 
-    pc.parse("")
-    assert_equal("", f.read)
+  def assert_output(command, result)
+    @pc.parse(command)
+    assert_equal(result, @fifo.read)
+  end
+
+  def tokens
+    assert_output("", "")
 
     # Floats
-    pc.parse("write 1.2")
-    assert_equal("1.2", f.read)
-    pc.parse("write -1.2")
-    assert_equal("-1.2", f.read)
+    assert_output("write 1.2", "1.2")
+    assert_output("write -1.2", "-1.2")
 
     # Integers
-    pc.parse("write 1")
-    assert_equal("1", f.read)
-    pc.parse("write -1")
-    assert_equal("-1", f.read)
+    assert_output("write 1", "1")
+    assert_output("write -1", "-1")
 
     # Booleans
-    pc.parse("write true")
-    assert_equal("true", f.read)
-    pc.parse("write false")
-    assert_equal("false", f.read)
+    assert_output("write true", "true")
+    assert_output("write false", "false")
 
     # Strings
-    pc.parse("write \"hej\"")
-    assert_equal("hej", f.read)
-
-    `rm f`
+    assert_output("write \"hej\"", "hej")
   end
 
   def arithm_expr
-    `mkfifo f`
-    f = File.open("f", IO::NONBLOCK, IO::RDONLY)
-
-    pc = PseudoCode.new
-
     # Addition
-    pc.parse("write 1 plus 2")
-    assert_equal("3", f.read)
+    assert_output("write 1 plus 2", "3")
 
     # Subtraction
-    pc.parse("write 2 minus 1")
-    assert_equal("1", f.read)
+    assert_output("write 2 minus 1", "1")
 
     # Times
-    pc.parse("write 2 times 3")
-    assert_equal("6", f.read)
+    assert_output("write 2 times 3", "6")
 
     # Divided by
-    pc.parse("write 6 divided by 2")
-    assert_equal("3", f.read)
+    assert_output("write 6 divided by 2", "3")
 
     # Modulo
-    pc.parse("write 6 modulo 4")
-    assert_equal("2", f.read)
+    assert_output("write 6 modulo 4", "2")
 
     # Complex
-    pc.parse("write (6 plus 3) times 2")
-    assert_equal("18", f.read)
-    pc.parse("write 6 plus 3 times 2")
-    assert_equal("12", f.read)
-    pc.parse("write 6 plus 3 modulo 2")
-    assert_equal("7", f.read)
-    pc.parse("write 3 modulo 2 minus 10")
-    assert_equal("-9", f.read)
-    pc.parse("write 6 times 3 modulo 2")
-    assert_equal("6", f.read)
-    pc.parse("write 6 modulo 3 times 2")
-    assert_equal("0", f.read)
-    pc.parse("write 6 times 3 plus 2")
-    assert_equal("20", f.read)
-    pc.parse("write 6 plus 3 times 2")
-    assert_equal("12", f.read)
-
-    f.close
-    `rm f`
+    assert_output("write (6 plus 3) times 2", "18")
+    assert_output("write 6 plus 3 times 2", "12")
+    assert_output("write 6 plus 3 modulo 2", "7")
+    assert_output("write 3 modulo 2 minus 10", "-9")
+    assert_output("write 6 times 3 modulo 2", "6")
+    assert_output("write 6 modulo 3 times 2", "0")
+    assert_output("write 6 times 3 plus 2", "20")
+    assert_output("write 6 plus 3 times 2", "12")
   end
 
   def bool_expr
-    pc = PseudoCode.new
-    `mkfifo f`
-    f = File.open("f", IO::NONBLOCK, IO::RDONLY)
-
     # not
-    pc.parse("write not true")
-    assert_equal("false", f.read())
-
-    pc.parse("write not false")
-    assert_equal("true", f.read())
+    assert_output("write not true", "false")
+    assert_output("write not false", "true")
 
     # and
-    pc.parse("write false and true")
-    assert_equal("false", f.read)
-    pc.parse("write false and false")
-    assert_equal("false", f.read)
-    pc.parse("write true and true")
-    assert_equal("true", f.read)
-    pc.parse("write true and false")
-    assert_equal("false", f.read)
+    assert_output("write false and true", "false")
+    assert_output("write false and false", "false")
+    assert_output("write true and true", "true")
+    assert_output("write true and false", "false")
 
     # or
-    pc.parse("write false or true")
-    assert_equal("true", f.read)
-    pc.parse("write false or false")
-    assert_equal("false", f.read)
-    pc.parse("write true or true")
-    assert_equal("true", f.read)
-    pc.parse("write true or false")
-    assert_equal("true", f.read)
+    assert_output("write false or true", "true")
+    assert_output("write false or false", "false")
+    assert_output("write true or true", "true")
+    assert_output("write true or false", "true")
 
     # Complex
-    pc.parse("write (false and true) or false")
-    assert_equal("false", f.read)
-    pc.parse("write false and (true or false)")
-    assert_equal("false", f.read)
-    pc.parse("write (true and false) or true")
-    assert_equal("true", f.read)
-    pc.parse("write true and (false or true)")
-    assert_equal("true", f.read)
-    pc.parse("write false and true or false")
-    assert_equal("false", f.read)
-    pc.parse("write false or true and false")
-    assert_equal("false", f.read)
+    assert_output("write (false and true) or false", "false")
+    assert_output("write false and (true or false)", "false")
+    assert_output("write (true and false) or true", "true")
+    assert_output("write true and (false or true)", "true")
+    assert_output("write false and true or false", "false")
+    assert_output("write false or true and false", "false")
 
     # Comparison
     ## Integers
-    pc.parse("write 1 is less than 2")
-    assert_equal("true", f.read)
-    pc.parse("write 2 is less than 1")
-    assert_equal("false", f.read)
-    pc.parse("write 2 is greater than 1")
-    assert_equal("true", f.read)
-    pc.parse("write 1 is greater than 2")
-    assert_equal("false", f.read)
-    pc.parse("write 1 is between 10 and 0")
-    assert_equal("true", f.read)
-    pc.parse("write 0 is between 10 and 1")
-    assert_equal("false", f.read)
-    pc.parse("write 1 is 2 or less")
-    assert_equal("true", f.read)
-    pc.parse("write 100 is 2 or less")
-    assert_equal("false", f.read)
-    pc.parse("write 4 is 3 or more")
-    assert_equal("true", f.read)
-    pc.parse("write 4 is 4 or more")
-    assert_equal("true", f.read)
+    assert_output("write 1 is less than 2", "true")
+    assert_output("write 2 is less than 1", "false")
+    assert_output("write 2 is greater than 1", "true")
+    assert_output("write 1 is greater than 2", "false")
+    assert_output("write 1 is between 10 and 0", "true")
+    assert_output("write 0 is between 10 and 1", "false")
+    assert_output("write 1 is 2 or less", "true")
+    assert_output("write 100 is 2 or less", "false")
+    assert_output("write 4 is 3 or more", "true")
+    assert_output("write 4 is 4 or more", "true")
 
     ## Floats
-    pc.parse("write 1.0 is less than 2.0")
-    assert_equal("true", f.read)
-    pc.parse("write 2.0 is less than 1.00")
-    assert_equal("false", f.read)
-    pc.parse("write 2.0 is greater than 1.00")
-    assert_equal("true", f.read)
-    pc.parse("write 1.00 is greater than 2.0")
-    assert_equal("false", f.read)
-    pc.parse("write 1.00000 is between 10.0 and 0.0")
-    assert_equal("true", f.read)
-    pc.parse("write 0.0 is between 10.0 and 1.0")
-    assert_equal("false", f.read)
-    pc.parse("write 1.0 is 2.0 or less")
-    assert_equal("true", f.read)
-    pc.parse("write 100.00 is 2.0 or less")
-    assert_equal("false", f.read)
-    pc.parse("write 4.0 is 3.0 or more")
-    assert_equal("true", f.read)
-    pc.parse("write 4.0 is 4.0 or more")
-    assert_equal("true", f.read)
+    assert_output("write 1.0 is less than 2.0", "true")
+    assert_output("write 2.0 is less than 1.00", "false")
+    assert_output("write 2.0 is greater than 1.00", "true")
+    assert_output("write 1.00 is greater than 2.0", "false")
+    assert_output("write 1.00000 is between 10.0 and 0.0", "true")
+    assert_output("write 0.0 is between 10.0 and 1.0", "false")
+    assert_output("write 1.0 is 2.0 or less", "true")
+    assert_output("write 100.00 is 2.0 or less", "false")
+    assert_output("write 4.0 is 3.0 or more", "true")
+    assert_output("write 4.0 is 4.0 or more", "true")
 
     ## Float/Integer mix
-    pc.parse("write 1 is less than 2.0")
-    assert_equal("true", f.read)
-    pc.parse("write 2 is less than 1.00")
-    assert_equal("false", f.read)
-    pc.parse("write 2 is greater than 1.00")
-    assert_equal("true", f.read)
-    pc.parse("write 10 is greater than 2.0")
-    assert_equal("true", f.read)
-    pc.parse("write 1 is between 10.0 and 0.0")
-    assert_equal("true", f.read)
-    pc.parse("write 0 is between 10.0 and 1.0")
-    assert_equal("false", f.read)
-    pc.parse("write 1 is 2.0 or less")
-    assert_equal("true", f.read)
-    pc.parse("write 100 is 2.0 or less")
-    assert_equal("false", f.read)
-    pc.parse("write 4 is 3.0 or more")
-    assert_equal("true", f.read)
-    pc.parse("write 4 is 4.0 or more")
-    assert_equal("true", f.read)
-
-    f.close
-    `rm f`
+    assert_output("write 1 is less than 2.0", "true")
+    assert_output("write 2 is less than 1.00", "false")
+    assert_output("write 2 is greater than 1.00", "true")
+    assert_output("write 10 is greater than 2.0", "true")
+    assert_output("write 1 is between 10.0 and 0.0", "true")
+    assert_output("write 0 is between 10.0 and 1.0", "false")
+    assert_output("write 1 is 2.0 or less", "true")
+    assert_output("write 100 is 2.0 or less", "false")
+    assert_output("write 4 is 3.0 or more", "true")
+    assert_output("write 4 is 4.0 or more", "true")
   end
 
   def stmts
-    pc = PseudoCode.new
-    `mkfifo f`
-    f = File.open("f", IO::NONBLOCK, IO::RDONLY)
-
-    pc.parse("write 1 plus 43\nwrite 4 minus 3")
-    assert_equal('441', f.read)
-
-    f.close
-    `rm f`
+    assert_output("write 1 plus 43\nwrite 4 minus 3", '441')
   end
 
-  def variables
-    pc = PseudoCode.new
-    `mkfifo f`
-    f = File.open("f", IO::NONBLOCK, IO::RDONLY)
-
-    pc.parse("testVar equals 4 plus 1\nwrite testVar")
-    assert_equal("5", f.read)
-    pc.parse("testVar equals 4 plus 1\ntestVar equals testVar plus 1\nwrite testVar")
-    assert_equal("6", f.read)
-    pc.parse("testVar equals true or false\nwrite testVar")
-    assert_equal("true", f.read)
+  def test_variables
+    assert_output("testVar equals 4 plus 1\nwrite testVar", "5")
+    assert_output("testVar equals 4 plus 1\ntestVar equals testVar plus 1\nwrite testVar", "6")
+    assert_output("testVar equals true or false\nwrite testVar", "true")
     # Raises ERROR
-#    pc.parse("testVar equals testVarABC plus 1\nwrite testVar")
-#    assert_equal("5", f.read)
-    pc.parse("testVar equals 0\nincrease testVar by 4\nwrite testVar")
-    assert_equal("4", f.read)
-    pc.parse("testVar equals 0\ndecrease testVar by 4\nwrite testVar")
-    assert_equal("-4", f.read)
-    pc.parse("testVar equals 2\nmultiply testVar by 4\nwrite testVar")
-    assert_equal("8", f.read)
-    pc.parse("testVar equals 8\ndivide testVar by 4\nwrite testVar")
-    assert_equal("2", f.read)
+    # assert_output("testVar equals testVarABC plus 1\nwrite testVar", "5")
+    assert_output("testVar equals 0\nincrease testVar by 4\nwrite testVar", "4")
+    assert_output("testVar equals 0\ndecrease testVar by 4\nwrite testVar", "-4")
+    assert_output("testVar equals 2\nmultiply testVar by 4\nwrite testVar", "8")
+    assert_output("testVar equals 8\ndivide testVar by 4\nwrite testVar", "2")
+  end
 
-    f.close
-    `rm f`
+  def indent
+    #pc.parse("write 1\n  write 2\n  write 3\nwrite 4\n  write 5\n")
+    # ger
+    # ["write", 1, :newline, :indent, "write", 2, :newline, "write", 3,
+    #  :newline, :dedent, "write", 4, :newline, :indent, "write", 5, :newline,
+    #  :dedent]
   end
 end
