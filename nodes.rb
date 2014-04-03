@@ -1,6 +1,5 @@
 class SuperNode
-  def initialize(value)
-    @value = value
+  def initialize_global_variables
     @@variables = {}
   end
 end
@@ -8,6 +7,7 @@ end
 class ProgramNode < SuperNode
   def initialize(statements)
     @statements = statements
+    initialize_global_variables
   end
 
   def evaluate
@@ -22,17 +22,17 @@ class AssignmentNode < SuperNode
   end
 
   def evaluate
-    @value = @value.evaluate if @value.class.superclass == SuperNode
+    value = @value.class.superclass == SuperNode ? @value.evaluate : @value
     if @op != nil and not @@variables.include? @name
       raise "ERROR: Variable does not exist!"
     end
     case @op
-    when nil then @@variables[@name] = @value
-    when '+=' then @@variables[@name] += @value
-    when '-=' then @@variables[@name] -= @value
-    when '*=' then @@variables[@name] *= @value
-    when '/=' then @@variables[@name] /= @value
-    when 'array' then @@variables[@name] = @value.map { |a| @value.class.superclass == SuperNode ? a.evaluate : a }
+    when nil then @@variables[@name] = value
+    when '+=' then @@variables[@name] += value
+    when '-=' then @@variables[@name] -= value
+    when '*=' then @@variables[@name] *= value
+    when '/=' then @@variables[@name] /= value
+    when 'array' then @@variables[@name] = value.map { |a| value.class.superclass == SuperNode ? a.evaluate : a }
     end
   end
 end
@@ -55,8 +55,8 @@ class ConditionNode < SuperNode
   end
 
   def evaluate
-    @expression = @expression.evaluate if @expression.class.superclass == SuperNode
-    if @expression
+    expression = @expression.class.superclass == SuperNode ? @expression.evaluate : @expression
+    if expression
       @statements.each { |s| s.evaluate}
     elsif @elseif != nil
       @elseif.evaluate
@@ -65,6 +65,18 @@ class ConditionNode < SuperNode
   end
 end
 
+class WhileNode < SuperNode
+  def initialize(expr, stmts)
+    @expression, @statements = expr, stmts
+  end
+
+  def evaluate
+    while @expression.class.superclass == SuperNode ? @expression.evaluate : @expression
+      p @@variables
+      @statements.each { |s| s.evaluate }
+    end
+  end
+end
 class LookupNode < SuperNode
   def initialize(name)
     @name = name
@@ -72,6 +84,7 @@ class LookupNode < SuperNode
 
   def evaluate
     if not @@variables.include? @name
+      p @@variables
       raise "ERROR: Variable does not exist!"
     end
     @@variables[@name]
@@ -79,6 +92,9 @@ class LookupNode < SuperNode
 end
 
 class BoolNode < SuperNode
+  def initialize(value)
+    @value = value
+  end
   def evaluate
     if @value.class.superclass == SuperNode
       @value.evaluate
@@ -107,15 +123,21 @@ class BoolAndNode < SuperNode
 end
 
 class BoolNotNode < SuperNode
+  def initialize(value)
+    @value = value
+  end
   def evaluate
     @value.evaluate == false
   end
 end
 
 class WriteNode < SuperNode
+  def initialize(value)
+    @value = value
+  end
   def evaluate
-    @value = @value.evaluate if @value.class.superclass == SuperNode
-    File.open("f", "a") { |f| f.print @value }
+    value = @value.class.superclass == SuperNode ? @value.evaluate : @value
+    File.open("f", "a") { |f| f.print value }
   end
 end
 
@@ -124,16 +146,16 @@ class ComparisonNode < SuperNode
     @lh, @op, @rh, @middle = lh, op, rh, middle
   end
   def evaluate
-    @lh = @lh.evaluate if @lh.class.superclass == SuperNode
-    @rh = @rh.evaluate if @rh.class.superclass == SuperNode
-    @middle = @middle.evaluate if @middle and @middle.class.superclass == SuperNode
+    lh = @lh.class.superclass == SuperNode ? @lh.evaluate : @lh
+    rh = @rh.class.superclass == SuperNode ? @rh.evaluate : @rh
+    middle = (@middle.class.superclass == SuperNode ? @middle.evaluate : @middle) if @middle
     case @op
-    when '<' then @lh < @rh
-    when '>' then @lh > @rh
-    when '<=' then @lh <= @rh
-    when '>=' then @lh >= @rh
-    when 'between' then @middle.between?([@lh,@rh].min, [@lh, @rh].max)
-    when '==' then @lh == @rh
+    when '<' then lh < rh
+    when '>' then lh > rh
+    when '<=' then lh <= rh
+    when '>=' then lh >= rh
+    when 'between' then middle.between?([lh,rh].min, [lh, rh].max)
+    when '==' then lh == rh
     end
   end
 end
@@ -143,14 +165,14 @@ class ArithmNode < SuperNode
     @lh, @op, @rh = lh, op, rh
   end
   def evaluate
-    @lh = @lh.evaluate if @lh.class.superclass == SuperNode
-    @rh = @rh.evaluate if @rh.class.superclass == SuperNode
+    lh = @lh.class.superclass == SuperNode ? @lh.evaluate : @lh
+    rh = @rh.class.superclass == SuperNode ? @rh.evaluate : @rh
     case @op
-    when '+' then @lh + @rh
-    when '-' then @lh - @rh
-    when '%' then @lh % @rh
-    when '*' then @lh * @rh
-    when '/' then @lh / @rh
+    when '+' then lh + rh
+    when '-' then lh - rh
+    when '%' then lh % rh
+    when '*' then lh * rh
+    when '/' then lh / rh
     end
   end
 end

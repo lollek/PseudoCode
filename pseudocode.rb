@@ -28,7 +28,7 @@ class PseudoCode
         match(:assignment) { |m| m }
         match(:input) { |m| m }
         match(:condition) { |m| m }
-#        match(:loop) { |m| m }
+        match(:loop) { |m| m }
 #        match(:expression) { |m| m }
 #        match(:func_decl) { |m| m }
 #        match(:func_exec) { |m| m }
@@ -87,19 +87,22 @@ class PseudoCode
         end
       end
 
-#     rule :loop do
-#       match(:foreach)
-#       match(:while)
-#     end
+      rule :loop do
+#        match(:foreach)
+        match(:while)
+      end
 
 #     rule :foreach do
 #        match('for', 'each', :variable_set, 'in', :variable_get, 'do', '\n', '\t', :statements, DEDENT)
 #        match('for', 'each', :variable_set, :from, 'do', '\n', '\t', :statements, DEDENT)
 #     end
 
-#     rule :while do
-#        match('while', :bool_expr, 'do', '\n', '\t', :statements, DEDENT)
-#     end
+      rule :while do
+        match('while', :bool_expr, 'do', :newline, :indent, :statements, :dedent) do
+          |_, expr, _, _ , _, stmts, _|
+          WhileNode.new(expr, stmts)
+        end
+      end
 
 #     rule :from do
 #       match('from', :variable_get, 'to', :variable_get)
@@ -109,8 +112,8 @@ class PseudoCode
 #     end
 
       rule :expression do
-        match(:bool_expr) { |m| m }
         match(:aritm_expr) { |m| m }
+        match(:bool_expr) { |m| m }
         match(:variable_get) { |m| m }
         match(:string) { |m| m }
 #       match(:func_exec)
@@ -134,7 +137,7 @@ class PseudoCode
         match('not', :bool_expr) { |_, e| BoolNotNode.new(e) }
         match('(', :bool_expr, ')') { |_, e, _| BoolNode.new(e) }
         match(:bool) { |m| BoolNode.new(m) }
-        match(:variable_get) { |m| m }
+#        match(:variable_get) { |m| m }
       end
 
       rule :aritm_expr do
@@ -153,7 +156,7 @@ class PseudoCode
       rule :factor do
         match('(', :aritm_expr, ')') { |_, m, _| m }
         match(:number) { |m| m}
-        match(:variable_get) { |m| m }
+#        match(:variable_get) { |m| m }
       end
 
 #     rule :func_decl do

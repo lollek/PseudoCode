@@ -130,8 +130,10 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_output("write 1 plus 43\nwrite 4 minus 3", '441')
   end
 
-  def variables
+  def test_variables
     assert_output("testVar equals 4 plus 1\nwrite testVar", "5")
+    assert_output("testVarA equals 4\ntestVarB equals testVarA plus testVarA", "")
+    assert_output("testVarA equals 4 plus 1\ntestVarB equals testVarA plus 1\nwrite testVarB", "6")
     assert_output("testVar equals 4 plus 1\ntestVar equals testVar plus 1\nwrite testVar", "6")
     assert_output("testVar equals true or false\nwrite testVar", "true")
     # Raises ERROR
@@ -146,7 +148,7 @@ class TestPseudoCode < Test::Unit::TestCase
 #    assert_output("read to testVar\nwrite testVar", "hej")
 #  end
 
-  def test_if
+ def if
     assert_output("if true then\n  write \"TRUE\"\n", "TRUE")
     assert_output("if false then\n  write \"FALSE\"\n", "")
     assert_output("if true then\n  write \"TRUE\"\n  testVar equals 42\n  write testVar\n", "TRUE42")
@@ -154,7 +156,7 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_output("testVar equals true\nif testVar then\n  write \"TRUE\"\n", "TRUE")
   end
 
-  def test_elseif
+  def elseif
     assert_output("testVar equals true\nif testVar then\n  write 1\nelse if testVar then\n  write 0\n", "1")
     assert_output("testVar equals false\nif testVar then\n  write 1\nelse if not testVar then\n  write 0\n", "0")
     assert_output("testVarA equals 5\ntestVarB equals 2\nif testVarA is between 10 and testVarB then\n  write 1\nelse if not testVar then\n  write 0\n", "1")
@@ -162,7 +164,13 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_output("if false then\n  write 0\nelse if true then\n  write 0\nelse if true then\n  write 1\n", "0")
   end
 
-  def test_else
+  def else
     assert_output("if false then\n  write 0\nelse\n  write 1\n", "1")
+    assert_output("if false then\n  write 0\nelse if true then\n  write 0\nelse\n  write 1\n", "0")
+    assert_output("if false then\n  write 0\nelse if false then\n  write 0\nelse\n  write 1\n", "1")
+  end
+
+  def while
+      assert_output("testVar equals 0\nwhile testVar is less than 10 do\n  write testVar\n  increase testVar by 1\n\n", "0123456789")
   end
 end
