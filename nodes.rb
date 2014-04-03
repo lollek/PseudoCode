@@ -1,5 +1,5 @@
 class SuperNode
-  def initialize value
+  def initialize(value)
     @value = value
     @@variables = {}
   end
@@ -34,6 +34,34 @@ class AssignmentNode < SuperNode
     when '/=' then @@variables[@name] /= @value
     when 'array' then @@variables[@name] = @value.map { |a| @value.class.superclass == SuperNode ? a.evaluate : a }
     end
+  end
+end
+
+class InputNode < SuperNode
+  def initialize(var_name)
+    @name = var_name
+  end
+
+  def evaluate
+    input = gets
+    input.chomp! if input
+    AssignmentNode.new(@name, input).evaluate
+  end
+end
+
+class ConditionNode < SuperNode
+  def initialize(expr, stmts, elseif=nil)
+    @expression, @statements, @elseif = expr, stmts, elseif
+  end
+
+  def evaluate
+    @expression = @expression.evaluate if @expression.class.superclass == SuperNode
+    if @expression
+      @statements.each { |s| s.evaluate}
+    elsif @elseif != nil
+      @elseif.evaluate
+    end
+    nil
   end
 end
 
@@ -96,6 +124,9 @@ class ComparisonNode < SuperNode
     @lh, @op, @rh, @middle = lh, op, rh, middle
   end
   def evaluate
+    @lh = @lh.evaluate if @lh.class.superclass == SuperNode
+    @rh = @rh.evaluate if @rh.class.superclass == SuperNode
+    @middle = @middle.evaluate if @middle and @middle.class.superclass == SuperNode
     case @op
     when '<' then @lh < @rh
     when '>' then @lh > @rh

@@ -126,10 +126,11 @@ class TestPseudoCode < Test::Unit::TestCase
   end
 
   def stmts
+    assert_output("write 1\nwrite 2", "12")
     assert_output("write 1 plus 43\nwrite 4 minus 3", '441')
   end
 
-  def test_variables
+  def variables
     assert_output("testVar equals 4 plus 1\nwrite testVar", "5")
     assert_output("testVar equals 4 plus 1\ntestVar equals testVar plus 1\nwrite testVar", "6")
     assert_output("testVar equals true or false\nwrite testVar", "true")
@@ -141,11 +142,27 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_output("testVar equals 8\ndivide testVar by 4\nwrite testVar", "2")
   end
 
-  def indent
-    #pc.parse("write 1\n  write 2\n  write 3\nwrite 4\n  write 5\n")
-    # ger
-    # ["write", 1, :newline, :indent, "write", 2, :newline, "write", 3,
-    #  :newline, :dedent, "write", 4, :newline, :indent, "write", 5, :newline,
-    #  :dedent]
+#  def input
+#    assert_output("read to testVar\nwrite testVar", "hej")
+#  end
+
+  def test_if
+    assert_output("if true then\n  write \"TRUE\"\n", "TRUE")
+    assert_output("if false then\n  write \"FALSE\"\n", "")
+    assert_output("if true then\n  write \"TRUE\"\n  testVar equals 42\n  write testVar\n", "TRUE42")
+    assert_output("if true then\n  write \"TRUE\"\n  testVar equals \"FALSE\"\n  write testVar\n", "TRUEFALSE")
+    assert_output("testVar equals true\nif testVar then\n  write \"TRUE\"\n", "TRUE")
+  end
+
+  def test_elseif
+    assert_output("testVar equals true\nif testVar then\n  write 1\nelse if testVar then\n  write 0\n", "1")
+    assert_output("testVar equals false\nif testVar then\n  write 1\nelse if not testVar then\n  write 0\n", "0")
+    assert_output("testVarA equals 5\ntestVarB equals 2\nif testVarA is between 10 and testVarB then\n  write 1\nelse if not testVar then\n  write 0\n", "1")
+    assert_output("if false then\n  write 0\nelse if false then\n  write 0\nelse if true then\n  write 1\n", "1")
+    assert_output("if false then\n  write 0\nelse if true then\n  write 0\nelse if true then\n  write 1\n", "0")
+  end
+
+  def test_else
+    assert_output("if false then\n  write 0\nelse\n  write 1\n", "1")
   end
 end

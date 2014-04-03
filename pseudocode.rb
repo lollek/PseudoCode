@@ -18,15 +18,16 @@ class PseudoCode
       end
 
       rule :statements do
-        match(:statement, :statements) { |a, b| [a] + b.flatten }
+        match(:statement, :newline, :statements) { |a, _, b| [a] + b.flatten }
+        match(:statement, :newline) { |a, _| [a] }
         match(:statement) { |m| [m] }
       end
 
       rule :statement do
         match(:output) { |m| m }
         match(:assignment) { |m| m }
-#        match(:input) { |m| m }
-#        match(:condition) { |m| m }
+        match(:input) { |m| m }
+        match(:condition) { |m| m }
 #        match(:loop) { |m| m }
 #        match(:expression) { |m| m }
 #        match(:func_decl) { |m| m }
@@ -41,7 +42,7 @@ class PseudoCode
         match('decrease', :variable_set, 'by', :expression) {  |_, name, _, value| AssignmentNode.new(name, value, '-=') } # -=
         match('multiply', :variable_set, 'by', :expression) {  |_, name, _, value| AssignmentNode.new(name, value, '*=') } # *=
         match('divide', :variable_set, 'by', :expression) {  |_, name, _, value| AssignmentNode.new(name, value, '/=') } # /=
-        match(:variable_set, 'holds', :expression_list) { |name, _, value| AssignmentNode.new(name, value, 'array') } # Work in progress
+        #match(:variable_set, 'holds', :expression_list) { |name, _, value| AssignmentNode.new(name, value, 'array') } # Work in progress
      end
 
       rule :output do
@@ -51,23 +52,40 @@ class PseudoCode
         match('write', :string) { |_, m| WriteNode.new(m) }
       end
 
-#     rule :input do
-#       match('read', 'to', :variable_set)
-#     end
-
-#     rule :condition do
-#        match('if', :bool_expr, 'then', '\n', '\t', :statements, DEDENT, :condition_elseif, :condition_else) # work in progress
-#     end
+      rule :input do
+        match('read', 'to', :variable_set) { |_, _, var_name| InputNode.new(var_name) }
+      end
       
-#     rule :condition_elseif do
-#        match('else if', :bool_expr, 'then', '\n', '\t', :statements, DEDENT, :condition_elseif) # work in progress
-#       match(:empty)
-#     end
+      rule :condition do
+        match('if', :bool_expr, 'then', :newline, :indent, :statements, :dedent, :condition_elseif) do 
+          |_, if_expr, _, _, _, if_stmts, _, elseif| ConditionNode.new(if_expr, if_stmts, elseif) 
+        end
+        match('if', :bool_expr, 'then', :newline, :indent, :statements, 
+              :dedent, :condition_else) do 
+          |_, if_expr, _, _, _, if_stmts, _, else_| ConditionNode.new(if_expr, if_stmts, else_)
+        end
+        match('if', :bool_expr, 'then', :newline, :indent, :statements, :dedent) do
+          |_, if_expr, _, _, _, if_stmts, _, _| ConditionNode.new(if_expr, if_stmts)
+        end
+      end
+     
+      rule :condition_elseif do
+        match('else', 'if', :bool_expr, 'then', :newline, :indent, :statements, :dedent, :condition_elseif) do
+          |_, _, if_expr, _, _, _, if_stmts, _, elseif| ConditionNode.new(if_expr, if_stmts, elseif)
+        end
+        match('else', 'if', :bool_expr, 'then', :newline, :indent, :statements, :dedent, :condition_else) do
+          |_, _, if_expr, _, _, _, if_stmts, _, else_| ConditionNode.new(if_expr, if_stmts, else_)
+        end
+        match('else', 'if', :bool_expr, 'then', :newline, :indent, :statements, :dedent) do
+          |_, _, if_expr, _, _, _, if_stmts, _| ConditionNode.new(if_expr, if_stmts)
+        end
+      end
 
-#     rule :condition_else do
-#        match('else', '\n', '\t', :statements, DEDENT) # work in progress
-#       match(:empty)
-#     end
+      rule :condition_else do
+        match('else', :newline, :indent, :statements, :dedent) do
+          |_, _, _, stmts, _| ConditionNode.new(true, stmts)
+        end
+      end
 
 #     rule :loop do
 #       match(:foreach)
@@ -94,6 +112,7 @@ class PseudoCode
         match(:bool_expr) { |m| m }
         match(:aritm_expr) { |m| m }
         match(:variable_get) { |m| m }
+        match(:string) { |m| m }
 #       match(:func_exec)
       end
 
@@ -115,6 +134,7 @@ class PseudoCode
         match('not', :bool_expr) { |_, e| BoolNotNode.new(e) }
         match('(', :bool_expr, ')') { |_, e, _| BoolNode.new(e) }
         match(:bool) { |m| BoolNode.new(m) }
+        match(:variable_get) { |m| m }
       end
 
       rule :aritm_expr do
