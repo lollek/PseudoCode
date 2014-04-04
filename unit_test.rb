@@ -130,7 +130,15 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_output("write 1 plus 43\nwrite 4 minus 3", '441')
   end
 
-  def test_variables
+  def test_assignment
+    assert_output("testVar equals 4 plus 1 times 2\nwrite testVar", "6")
+    assert_output("testVarA equals 2\ntestVarB equals testVarA\nwrite testVarB", "2")
+    assert_output("testVarA equals 2\ntestVarB equals 1 plus testVarA\nwrite testVarB", "3")
+    assert_output("testVarA equals 2\ntestVarB equals testVarA plus 1\nwrite testVarB", "3")
+    assert_output("testVarA equals 2\ntestVarB equals (testVarA plus 1)\nwrite testVarB", "3")
+  end
+
+  def variables
     assert_output("testVar equals 4 plus 1\nwrite testVar", "5")
     assert_output("testVarA equals 4\ntestVarB equals testVarA plus testVarA", "")
     assert_output("testVarA equals 4 plus 1\ntestVarB equals testVarA plus 1\nwrite testVarB", "6")

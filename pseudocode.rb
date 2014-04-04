@@ -112,8 +112,8 @@ class PseudoCode
 #     end
 
       rule :expression do
-        match(:aritm_expr) { |m| m }
         match(:bool_expr) { |m| m }
+        match(:aritm_expr) { |m| m }
         match(:variable_get) { |m| m }
         match(:string) { |m| m }
 #       match(:func_exec)
@@ -137,7 +137,7 @@ class PseudoCode
         match('not', :bool_expr) { |_, e| BoolNotNode.new(e) }
         match('(', :bool_expr, ')') { |_, e, _| BoolNode.new(e) }
         match(:bool) { |m| BoolNode.new(m) }
-#        match(:variable_get) { |m| m }
+        match(:variable_get) { |m| m }
       end
 
       rule :aritm_expr do
@@ -156,7 +156,7 @@ class PseudoCode
       rule :factor do
         match('(', :aritm_expr, ')') { |_, m, _| m }
         match(:number) { |m| m}
-#        match(:variable_get) { |m| m }
+        match(:variable_get) { |m| m }
       end
 
 #     rule :func_decl do
