@@ -194,4 +194,8 @@ class TestPseudoCode < Test::Unit::TestCase
   def while
       assert_output("testVar equals 0\nwhile testVar is less than 10 do\n  write testVar\n  increase testVar by 1\n\n", "0123456789")
   end
+
+  def test_foreach
+    
+  end
 end

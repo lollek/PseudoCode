@@ -88,29 +88,35 @@ class PseudoCode
       end
 
       rule :loop do
-#        match(:foreach)
+        match(:foreach)
         match(:while)
       end
+      
+      rule :foreach do
+        #        match('for', 'each', :variable_set, 'in', :variable_get, 'do', 
+        #              :newline, :indent, :statements, :dedent) do
+        #          |_, _, iterator, _, var, _, _, _, stmts, _|
+        #        end 
+        match('for', 'each', :variable, :from, 'do', :newline, :indent, :statements, :dedent) do
+          |_, _, var, iterator, _, _, _, stmts, _| ForEachNode.new(var, iterator, stmts)
 
-#     rule :foreach do
-#        match('for', 'each', :variable_set, 'in', :variable_get, 'do', '\n', '\t', :statements, DEDENT)
-#        match('for', 'each', :variable_set, :from, 'do', '\n', '\t', :statements, DEDENT)
-#     end
-
+        end
+      end
+      
       rule :while do
         match('while', :bool_expr, 'do', :newline, :indent, :statements, :dedent) do
           |_, expr, _, _ , _, stmts, _|
           WhileNode.new(expr, stmts)
         end
       end
-
-#     rule :from do
-#       match('from', :variable_get, 'to', :variable_get)
-#       match('from', :variable_get, 'to', :integer)
-#       match('from', :integer, 'to', :variable_get)
-#       match('from', :integer, 'to', :integer)
-#     end
-
+      
+      rule :from do
+#        match('from', :variable_get, 'to', :variable_get) { |_, start, _, stop| FromNode.new(start, stop) }
+#        match('from', :variable_get, 'to', :integer) { |_, start, _, stop| FromNode.new(start, stop) }
+#        match('from', :integer, 'to', :variable_get) { |_, start, _, stop| FromNode.new(start, stop) }
+        match('from', :integer, 'to', :integer) { |_, start, _, stop| FromNode.new(start, stop) }
+      end
+      
       rule :expression do
         match(:bool_expr) { |m| m }
         match(:aritm_expr) { |m| m }
@@ -200,10 +206,18 @@ class PseudoCode
 #     end
 
       rule :number do
-        match(Float) { |m| m}
-        match(Integer) { |m| m}
+        match(:float) { |m| m}
+        match(:integer) { |m| m}
       end
 
+      rule :integer do
+        match(Integer) { |m| m}
+      end
+      
+      rule :float do
+        match(Float) { |m| m}
+      end
+      
       rule :variable do
         match(/^[a-zA-Z]+$/) { |m| m }
       end

@@ -1,6 +1,6 @@
 class SuperNode
   def initialize_global_variables
-    @@variables = {}
+    @@variables = Scope.new
   end
 end
 
@@ -11,8 +11,40 @@ class ProgramNode < SuperNode
   end
 
   def evaluate
-    @statements.each { |s| s.evaluate}
+    @statements.each { |s| s.evaluate(@@variables) }
     nil
+  end
+end
+
+class StatementNode < SuperNode
+  def initialize(statements)
+    @statements = statements
+  end
+
+  def evaluate(scope)
+    @statements.each { |s| s.evaluate(scope) }
+    nil
+  end
+end
+
+class Scope
+  def initialize(parent=nil)
+    @parent = parent
+    @variables = {}
+  end
+
+  def set(name, value)
+    @variables[name] = value
+  end
+
+  def get(name)
+    if @variables.include?(name)
+      @variables[name]
+    elsif @parent
+      @parent.get(name)
+    else
+      raise "ERROR: Variable does not exist!"
+    end
   end
 end
 
@@ -21,18 +53,15 @@ class AssignmentNode < SuperNode
     @name, @value, @op = name, value, op       
   end
 
-  def evaluate
-    value = @value.class.superclass == SuperNode ? @value.evaluate : @value
-    if @op != nil and not @@variables.include? @name
-      raise "ERROR: Variable does not exist!"
-    end
+  def evaluate(scope)
+    value = @value.class.superclass == SuperNode ? @value.evaluate(scope) : @value
     case @op
-    when nil then @@variables[@name] = value
-    when '+=' then @@variables[@name] += value
-    when '-=' then @@variables[@name] -= value
-    when '*=' then @@variables[@name] *= value
-    when '/=' then @@variables[@name] /= value
-    when 'array' then @@variables[@name] = value.map { |a| value.class.superclass == SuperNode ? a.evaluate : a }
+    when nil then scope.set(@name, value) # =
+    when '+=' then scope.set(@name, scope.get(@name) + value)
+    when '-=' then scope.set(@name, scope.get(@name) - value)
+    when '*=' then scope.set(@name, scope.get(@name) * value)
+    when '/=' then scope.set(@name, scope.get(@name) / value)
+    when 'array' then scope.set(@name, value.map { |a| value.class.superclass == SuperNode ? a.evaluate(scope) : a })
     end
   end
 end
@@ -42,10 +71,10 @@ class InputNode < SuperNode
     @name = var_name
   end
 
-  def evaluate
+  def evaluate(scope)
     input = gets
     input.chomp! if input
-    AssignmentNode.new(@name, input).evaluate
+    AssignmentNode.new(@name, input).evaluate(scope)
   end
 end
 
@@ -54,12 +83,12 @@ class ConditionNode < SuperNode
     @expression, @statements, @elseif = expr, stmts, elseif
   end
 
-  def evaluate
-    expression = @expression.class.superclass == SuperNode ? @expression.evaluate : @expression
+  def evaluate(scope)
+    expression = @expression.class.superclass == SuperNode ? @expression.evaluate(scope) : @expression
     if expression
-      @statements.each { |s| s.evaluate}
+      @statements.each { |s| s.evaluate(scope) }
     elsif @elseif != nil
-      @elseif.evaluate
+      @elseif.evaluate(scope)
     end
     nil
   end
@@ -70,24 +99,47 @@ class WhileNode < SuperNode
     @expression, @statements = expr, stmts
   end
 
-  def evaluate
-    while @expression.class.superclass == SuperNode ? @expression.evaluate : @expression
-      p @@variables
-      @statements.each { |s| s.evaluate }
+  def evaluate(scope)
+    while @expression.class.superclass == SuperNode ? @expression.evaluate(scope) : @expression
+      @statements.each { |s| s.evaluate(scope) }
     end
   end
 end
+
+class ForEachNode < SuperNode
+  def initialize(var, it, stmts)
+    @var, @iterator, @statements = var, it, stmts
+  end
+
+  def evaluate(parent_scope)
+    scope = Scope.new(parent_scope)
+    while AssignmentNode.new(@var, @iterator.evaluate(scope)).evaluate
+      @statements.each { |s| s.evaluate(scope) }
+    end
+  end
+end
+
+class FromNode < SuperNode
+  def initialize(start, stop)
+    @range = (start..stop).step
+  end
+
+  def evaluate
+    begin
+      @range.next
+    rescue StopIteration
+      nil
+    end
+  end
+end
+
 class LookupNode < SuperNode
   def initialize(name)
     @name = name
   end
 
-  def evaluate
-    if not @@variables.include? @name
-      p @@variables
-      raise "ERROR: Variable does not exist!"
-    end
-    @@variables[@name]
+  def evaluate(scope)
+    scope.get(@name)
   end
 end
 
@@ -95,9 +147,9 @@ class ExpressionNode < SuperNode
   def initialize(value)
     @value = value
   end
-  def evaluate
+  def evaluate(scope)
     if @value.class.superclass == SuperNode
-      @value.evaluate
+      @value.evaluate(scope)
     else
       @value
     end
@@ -108,9 +160,9 @@ class BoolNode < SuperNode
   def initialize(value)
     @value = value
   end
-  def evaluate
+  def evaluate(scope)
     if @value.class.superclass == SuperNode
-      @value.evaluate
+      @value.evaluate(scope)
     else
       @value
     end
@@ -121,8 +173,8 @@ class BoolOrNode < SuperNode
   def initialize(lh, rh)
     @lh, @rh = lh, rh
   end
-  def evaluate
-    @lh.evaluate or @rh.evaluate
+  def evaluate(scope)
+    @lh.evaluate(scope) or @rh.evaluate(scope)
   end
 end
 
@@ -130,8 +182,8 @@ class BoolAndNode < SuperNode
   def initialize(lh, rh)
     @lh, @rh = lh, rh
   end
-  def evaluate
-    @lh.evaluate and @rh.evaluate
+  def evaluate(scope)
+    @lh.evaluate(scope) and @rh.evaluate(scope)
   end
 end
 
@@ -139,8 +191,8 @@ class BoolNotNode < SuperNode
   def initialize(value)
     @value = value
   end
-  def evaluate
-    @value.evaluate == false
+  def evaluate(scope)
+    @value.evaluate(scope) == false
   end
 end
 
@@ -148,8 +200,8 @@ class WriteNode < SuperNode
   def initialize(value)
     @value = value
   end
-  def evaluate
-    value = @value.class.superclass == SuperNode ? @value.evaluate : @value
+  def evaluate(scope)
+    value = @value.class.superclass == SuperNode ? @value.evaluate(scope) : @value
     File.open("f", "a") { |f| f.print value }
   end
 end
@@ -158,10 +210,10 @@ class ComparisonNode < SuperNode
   def initialize(lh, op, rh, middle=nil)
     @lh, @op, @rh, @middle = lh, op, rh, middle
   end
-  def evaluate
-    lh = @lh.class.superclass == SuperNode ? @lh.evaluate : @lh
-    rh = @rh.class.superclass == SuperNode ? @rh.evaluate : @rh
-    middle = (@middle.class.superclass == SuperNode ? @middle.evaluate : @middle) if @middle
+  def evaluate(scope)
+    lh = @lh.class.superclass == SuperNode ? @lh.evaluate(scope) : @lh
+    rh = @rh.class.superclass == SuperNode ? @rh.evaluate(scope) : @rh
+    middle = (@middle.class.superclass == SuperNode ? @middle.evaluate(scope) : @middle) if @middle
     case @op
     when '<' then lh < rh
     when '>' then lh > rh
@@ -177,9 +229,9 @@ class AritmNode < SuperNode
   def initialize(lh, op, rh)
     @lh, @op, @rh = lh, op, rh
   end
-  def evaluate
-    lh = @lh.class.superclass == SuperNode ? @lh.evaluate : @lh
-    rh = @rh.class.superclass == SuperNode ? @rh.evaluate : @rh
+  def evaluate(scope)
+    lh = @lh.class.superclass == SuperNode ? @lh.evaluate(scope) : @lh
+    rh = @rh.class.superclass == SuperNode ? @rh.evaluate(scope) : @rh
     case @op
     when '+' then lh + rh
     when '-' then lh - rh
