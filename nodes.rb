@@ -91,6 +91,19 @@ class LookupNode < SuperNode
   end
 end
 
+class ExpressionNode < SuperNode
+  def initialize(value)
+    @value = value
+  end
+  def evaluate
+    if @value.class.superclass == SuperNode
+      @value.evaluate
+    else
+      @value
+    end
+  end
+end
+
 class BoolNode < SuperNode
   def initialize(value)
     @value = value
@@ -160,7 +173,7 @@ class ComparisonNode < SuperNode
   end
 end
 
-class ArithmNode < SuperNode
+class AritmNode < SuperNode
   def initialize(lh, op, rh)
     @lh, @op, @rh = lh, op, rh
   end

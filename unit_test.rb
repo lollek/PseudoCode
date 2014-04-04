@@ -53,13 +53,26 @@ class TestPseudoCode < Test::Unit::TestCase
 
     # Complex
     assert_output("write (6 plus 3) times 2", "18")
+    assert_output("write 6 plus (3 times 2)", "12")
     assert_output("write 6 plus 3 times 2", "12")
     assert_output("write 6 plus 3 modulo 2", "7")
+    assert_output("write (6 plus 3) modulo 2", "1")
+    assert_output("write 6 plus (3 modulo 2)", "7")
     assert_output("write 3 modulo 2 minus 10", "-9")
+    assert_output("write (3 modulo 2) minus 10", "-9")
+    assert_output("write 3 modulo (2 minus 10)", "-5")
     assert_output("write 6 times 3 modulo 2", "6")
+    assert_output("write (6 times 3) modulo 2", "0")
+    assert_output("write 6 times (3 modulo 2)", "6")
     assert_output("write 6 modulo 3 times 2", "0")
+    assert_output("write (6 modulo 3) times 2", "0")
+    assert_output("write 6 modulo (3 times 2)", "0")
     assert_output("write 6 times 3 plus 2", "20")
+    assert_output("write (6 times 3) plus 2", "20")
+    assert_output("write 6 times (3 plus 2)", "30")
     assert_output("write 6 plus 3 times 2", "12")
+    assert_output("write (6 plus 3) times 2", "18")
+    assert_output("write 6 plus (3 times 2)", "12")
   end
 
   def bool_expr
@@ -138,7 +151,7 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_output("testVarA equals 2\ntestVarB equals (testVarA plus 1)\nwrite testVarB", "3")
   end
 
-  def variables
+  def test_variables
     assert_output("testVar equals 4 plus 1\nwrite testVar", "5")
     assert_output("testVarA equals 4\ntestVarB equals testVarA plus testVarA", "")
     assert_output("testVarA equals 4 plus 1\ntestVarB equals testVarA plus 1\nwrite testVarB", "6")

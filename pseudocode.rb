@@ -125,36 +125,54 @@ class PseudoCode
       end
 
       rule :bool_expr do
-        # Tar ej bool?
-        match(:aritm_expr, 'is', 'less', 'than', :aritm_expr) { |e, _, _, _, f| ComparisonNode.new(e,'<',f) }
-        match(:aritm_expr, 'is', 'greater', 'than', :aritm_expr) { |e, _, _, _, f| ComparisonNode.new(e, '>', f) }
-        match(:aritm_expr, 'is', :aritm_expr, 'or', 'more') { |e, _, f, _, _| ComparisonNode.new(e, '>=', f) }
-        match(:aritm_expr, 'is', :aritm_expr, 'or', 'less') { |e, _, f, _, _| ComparisonNode.new(e, '<=', f) }
-        match(:aritm_expr, 'is', 'between', :aritm_expr, 'and', :aritm_expr) { |e, _, _, f, _, g| ComparisonNode.new(f, 'between', g, e) }
-        # Tar ej arithm?
-        match(:bool_expr, 'and', :bool_expr) { |e, _, f| BoolAndNode.new(e,f) }
-        match(:bool_expr, 'or', :bool_expr) { |e, _, f| BoolOrNode.new(e,f) }
+        match(:bool_expr, 'and', :simple_bool) { |e, _, f| BoolAndNode.new(e,f) }
+        match(:bool_expr, 'or', :simple_bool) { |e, _, f| BoolOrNode.new(e,f) }
+        match(:simple_bool)
+      end
+
+      rule :simple_bool do
         match('not', :bool_expr) { |_, e| BoolNotNode.new(e) }
-        match('(', :bool_expr, ')') { |_, e, _| BoolNode.new(e) }
+#        match('(', :bool_expr, ')') { |_, e, _| BoolNode.new(e) }
         match(:bool) { |m| BoolNode.new(m) }
-        match(:variable_get) { |m| m }
+        match(:comparison) { |m| m }
+      end
+
+      rule :comparison do
+        match(:aritm_expr, 'is', 'less', 'than', :aritm_expr) do
+          |e, _, _, _, f| ComparisonNode.new(e,'<',f)
+        end
+        match(:aritm_expr, 'is', 'greater', 'than', :aritm_expr) do
+          |e, _, _, _, f| ComparisonNode.new(e, '>', f)
+        end
+        match(:aritm_expr, 'is', :aritm_expr, 'or', 'more') do
+          |e, _, f, _, _| ComparisonNode.new(e, '>=', f)
+        end
+        match(:aritm_expr, 'is', :aritm_expr, 'or', 'less') do
+          |e, _, f, _, _| ComparisonNode.new(e, '<=', f)
+        end
+        match(:aritm_expr, 'is', 'between', :aritm_expr, 'and', :aritm_expr) do
+          |e, _, _, f, _, g| ComparisonNode.new(f, 'between', g, e)
+        end
+        match(:aritm_expr) { |m| m }
       end
 
       rule :aritm_expr do
-        match(:term, 'plus', :aritm_expr) { |m, _, n| ArithmNode.new(m, '+', n) }
-        match(:term, 'minus', :aritm_expr) { |m, _, n| ArithmNode.new(m, '-', n) }
+        match(:term, 'plus', :aritm_expr) { |m, _, n| AritmNode.new(m, '+', n) }
+        match(:term, 'minus', :aritm_expr) { |m, _, n| AritmNode.new(m, '-', n) }
         match(:term) { |m| m }
       end
 
       rule :term do
-        match(:factor, 'modulo', :term) { |a, _, b| ArithmNode.new(a, '%', b) }
-        match(:factor, 'times', :term) { |a, _, b| ArithmNode.new(a, '*', b) }
-        match(:factor, 'divided', 'by', :term) { |a, _, _, b| ArithmNode.new(a, '/', b) }
+        match(:factor, 'modulo', :term) { |a, _, b| AritmNode.new(a, '%', b) }
+        match(:factor, 'times', :term) { |a, _, b| AritmNode.new(a, '*', b) }
+        match(:factor, 'divided', 'by', :term) { |a, _, _, b| AritmNode.new(a, '/', b) }
         match(:factor) { |m| m }
       end
 
       rule :factor do
-        match('(', :aritm_expr, ')') { |_, m, _| m }
+        match('(', :expression, ')') do
+          |_, m, _| ExpressionNode.new(m)
+        end
         match(:number) { |m| m}
         match(:variable_get) { |m| m }
       end
