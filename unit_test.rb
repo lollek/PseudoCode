@@ -143,7 +143,7 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_output("write 1 plus 43\nwrite 4 minus 3", '441')
   end
 
-  def test_assignment
+  def assignment
     assert_output("testVar equals 4 plus 1 times 2\nwrite testVar", "6")
     assert_output("testVarA equals 2\ntestVarB equals testVarA\nwrite testVarB", "2")
     assert_output("testVarA equals 2\ntestVarB equals 1 plus testVarA\nwrite testVarB", "3")
@@ -151,7 +151,7 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_output("testVarA equals 2\ntestVarB equals (testVarA plus 1)\nwrite testVarB", "3")
   end
 
-  def test_variables
+  def variables
     assert_output("testVar equals 4 plus 1\nwrite testVar", "5")
     assert_output("testVarA equals 4\ntestVarB equals testVarA plus testVarA", "")
     assert_output("testVarA equals 4 plus 1\ntestVarB equals testVarA plus 1\nwrite testVarB", "6")
@@ -195,7 +195,7 @@ class TestPseudoCode < Test::Unit::TestCase
       assert_output("testVar equals 0\nwhile testVar is less than 10 do\n  write testVar\n  increase testVar by 1\n\n", "0123456789")
   end
 
-  def test_foreach
-    
+  def test_scope
+    assert_output("test equals 1\nif true then\n  test equals 2\n  write test\nwrite test\n", "21")
   end
 end
