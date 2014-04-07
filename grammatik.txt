@@ -1,5 +1,5 @@
 <program>::=<statements>
-<statements>::=<statements><statement> | <empty>
+<statements>::=<statements><statement> | EMPTY
 <statement>::=
   (<assignment> | <output> | <input> | <condition> | <loop> |
    <expression> | <func_decl> |<func_exec> | <return_stmt>) NEWLINE
@@ -37,10 +37,9 @@
 <factor>::=<number> | <variable> | '('<term>')'
 <func_decl>::=<func_name> <parameters> 'does' NEWLINE INDENT <statements> DEDENT
 <func_exec>::='do' <func_name> <parameters>
-<parameters>::='with' <variable_list> | <empty>
+<parameters>::='with' <variable_list> | EMPTY
 <variable_list>::=<variable>(',' <variable>)*
 <return_stmt>::='return' <expression> NEWLINE
 <number>::=FLOAT | INTEGER
 <variable>::=/^[a-zA-Z]+$/
 <comment>::=/#.*/ NEWLINE
-<empty>::= /^$/

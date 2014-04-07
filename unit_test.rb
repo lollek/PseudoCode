@@ -14,8 +14,15 @@ class TestPseudoCode < Test::Unit::TestCase
   def assert_output(command, result)
     @pc.parse(command)
     assert_equal(result, @fifo.read)
+    assert_equal("", @fifo.read)
   end
 
+  def assert_file(filename, result)
+    @pc.parse(File.read("./test_cases/#{filename}"))
+    assert_equal(result, @fifo.read)
+    assert_equal("", @fifo.read)
+  end
+  
   def tokens
     assert_output("", "")
 
@@ -143,12 +150,13 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_output("write 1 plus 43\nwrite 4 minus 3", '441')
   end
 
-  def assignment
+  def test_assignment
     assert_output("testVar equals 4 plus 1 times 2\nwrite testVar", "6")
     assert_output("testVarA equals 2\ntestVarB equals testVarA\nwrite testVarB", "2")
     assert_output("testVarA equals 2\ntestVarB equals 1 plus testVarA\nwrite testVarB", "3")
     assert_output("testVarA equals 2\ntestVarB equals testVarA plus 1\nwrite testVarB", "3")
     assert_output("testVarA equals 2\ntestVarB equals (testVarA plus 1)\nwrite testVarB", "3")
+    assert_output("testVar holds 1,2,3,5,6\nwrite testVar", "[1, 2, 3, 5, 6]")
   end
 
   def variables
@@ -195,7 +203,24 @@ class TestPseudoCode < Test::Unit::TestCase
       assert_output("testVar equals 0\nwhile testVar is less than 10 do\n  write testVar\n  increase testVar by 1\n\n", "0123456789")
   end
 
-  def test_scope
-    assert_output("test equals 1\nif true then\n  test equals 2\n  write test\nwrite test\n", "21")
+  def foreach
+    assert_output("for each number from 0 to 10 do\n  write number\n", "012345678910")
+    assert_output("for each number from 10 to 0 do\n  write number\n", "109876543210")
+    assert_output("testVar equals 2\nfor each number from testVar to -2 do\n  write number\n", "210-1-2")
+    assert_output("testVar equals 2\nfor each number from -2 to testVar do\n  write number\n", "-2-1012")
+    assert_output("testA equals 0\ntestB equals 10\nfor each number from testA to testB do\n  write number\n", "012345678910")
+  end
+
+  def scope
+    assert_output("test equals 1\nif true then\n  test equals 2\n  write test\nwrite test\n", "22")
+    assert_output("test equals 1\nif true then\n  testB equals 2\n  write testB\nwrite test\n", "21")
+    assert_output("test equals 1\nif true then\n  test equals 2\n  write test\n", "2")
+    assert_output("testVar equals 0\nwhile testVar is less than 10 do\n  write testVar\n  increase testVar by 1\nwrite testVar", "012345678910")
+    assert_output("test equals 1\nif true then\n  testB equals 2\n  write testB\n  if true then\n    write test\n", "21")
+    assert_output("test equals 1\nif true then\n  testB equals 2\n  write test\n  if true then\n    write testB\n", "12")
+  end
+
+  def indentation
+    assert_file("indent1.pc", "AACAABCCD")
   end
 end

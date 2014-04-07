@@ -123,6 +123,7 @@ class Parser
   # Tokenize the string into small pieces
   def tokenize(string)
     indentation = 0
+    indent_stack = []
     @tokens = []
     @string = string.clone
     until string.empty?
@@ -143,8 +144,13 @@ class Parser
           if tok.pattern == /\A\n/
             new_indentation = /\A */.match(string)[0].length
             if new_indentation < indentation
-              @tokens << :dedent
+              while not indent_stack.empty? and indent_stack.last > new_indentation
+                indent_stack.pop
+                @tokens << :dedent
+              end
+              @tokens << :newline
             elsif new_indentation > indentation
+              indent_stack << new_indentation
               @tokens << :indent
             end
             indentation = new_indentation

@@ -34,16 +34,20 @@ class Scope
   end
 
   def set(name, value)
-    @variables[name] = value
+    if @parent and @parent.get(name)
+      @parent.set(name, value)
+    else
+      @variables[name] = value
+    end
   end
-
+  
   def get(name)
     if @variables.include?(name)
       @variables[name]
     elsif @parent
       @parent.get(name)
     else
-      raise "ERROR: Variable does not exist!"
+      nil
     end
   end
 end
@@ -61,7 +65,7 @@ class AssignmentNode < SuperNode
     when '-=' then scope.set(@name, scope.get(@name) - value)
     when '*=' then scope.set(@name, scope.get(@name) * value)
     when '/=' then scope.set(@name, scope.get(@name) / value)
-    when 'array' then scope.set(@name, value.map { |a| value.class.superclass == SuperNode ? a.evaluate(scope) : a })
+    when 'array' then scope.set(@name, value)
     end
   end
 end
@@ -83,7 +87,8 @@ class ConditionNode < SuperNode
     @expression, @statements, @elseif = expr, stmts, elseif
   end
 
-  def evaluate(scope)
+  def evaluate(parent_scope)
+    scope = Scope.new(parent_scope)
     expression = @expression.class.superclass == SuperNode ? @expression.evaluate(scope) : @expression
     if expression
       @statements.each { |s| s.evaluate(scope) }
@@ -99,7 +104,8 @@ class WhileNode < SuperNode
     @expression, @statements = expr, stmts
   end
 
-  def evaluate(scope)
+  def evaluate(parent_scope)
+    scope = Scope.new(parent_scope)
     while @expression.class.superclass == SuperNode ? @expression.evaluate(scope) : @expression
       @statements.each { |s| s.evaluate(scope) }
     end
@@ -113,7 +119,7 @@ class ForEachNode < SuperNode
 
   def evaluate(parent_scope)
     scope = Scope.new(parent_scope)
-    while AssignmentNode.new(@var, @iterator.evaluate(scope)).evaluate
+    while AssignmentNode.new(@var, @iterator.evaluate(scope)).evaluate(scope)
       @statements.each { |s| s.evaluate(scope) }
     end
   end
@@ -121,10 +127,21 @@ end
 
 class FromNode < SuperNode
   def initialize(start, stop)
-    @range = (start..stop).step
+    @start, @stop = start, stop
+    @has_been_initialized = false
   end
 
-  def evaluate
+  def evaluate(scope)
+    if not @has_been_initialized
+      @has_been_initialized = true
+      start = @start.class.superclass == SuperNode ? @start.evaluate(scope) : @start
+      stop = @stop.class.superclass == SuperNode ? @stop.evaluate(scope) : @stop    
+      if stop > start
+        @range = (start..stop).step
+      else
+        @range = start.downto(stop)
+      end
+    end
     begin
       @range.next
     rescue StopIteration
@@ -139,7 +156,9 @@ class LookupNode < SuperNode
   end
 
   def evaluate(scope)
-    scope.get(@name)
+    results = scope.get(@name)
+    raise "ERROR: Variable does not exist!" unless results
+    results
   end
 end
 
@@ -239,5 +258,20 @@ class AritmNode < SuperNode
     when '*' then lh * rh
     when '/' then lh / rh
     end
+  end
+end
+
+class ArrayNode < SuperNode
+  attr_reader :values
+  def initialize(values)
+    @values = values
+  end
+  
+  def evaluate(scope)
+    @values.map { |a| a.class.superclass == SuperNode ? a.evaluate(scope) : a }
+  end
+
+  def +(array)
+    ArrayNode.new(@values + array.values)
   end
 end
