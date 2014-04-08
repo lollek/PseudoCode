@@ -119,8 +119,26 @@ class ForEachNode < SuperNode
 
   def evaluate(parent_scope)
     scope = Scope.new(parent_scope)
-    while AssignmentNode.new(@var, @iterator.evaluate(scope)).evaluate(scope)
-      @statements.each { |s| s.evaluate(scope) }
+    if @iterator.class == LookupNode
+      @iterator = @iterator.evaluate(scope)
+    end
+
+    if @iterator.class == FromNode
+      while AssignmentNode.new(@var, @iterator.evaluate(scope)).evaluate(scope)
+        @statements.each { |s| s.evaluate(scope) }
+      end
+    elsif @iterator.class == String
+      @iterator.each_char do |letter|
+        AssignmentNode.new(@var, letter).evaluate(scope)
+        @statements.each { |s| s.evaluate(scope) }
+      end
+    elsif @iterator.class == ArrayNode
+      @iterator.evaluate(scope).each do |element|
+        AssignmentNode.new(@var, element).evaluate(scope)
+        @statements.each { |s| s.evaluate(scope) }
+      end
+    else
+      raise "Bad iterator class (#{@iterator.class}) received!"
     end
   end
 end
@@ -157,7 +175,7 @@ class LookupNode < SuperNode
 
   def evaluate(scope)
     results = scope.get(@name)
-    raise "ERROR: Variable does not exist!" unless results
+    raise "ERROR: Variable does not exist!" if results.nil?
     results
   end
 end

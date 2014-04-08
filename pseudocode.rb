@@ -96,10 +96,10 @@ class PseudoCode
       end
       
       rule :foreach do
-        #        match('for', 'each', :variable_set, 'in', :variable_get, 'do', 
-        #              :newline, :indent, :statements, :dedent) do
-        #          |_, _, iterator, _, var, _, _, _, stmts, _|
-        #        end 
+        match('for', 'each', :variable, 'in', :expression, 'do', 
+              :newline, :indent, :statements, :dedent) do
+          |_, _, var, _, iterator, _, _, _, stmts, _| ForEachNode.new(var, iterator, stmts)
+        end 
         match('for', 'each', :variable, :from, 'do', :newline, :indent, :statements, :dedent) do
           |_, _, var, iterator, _, _, _, stmts, _| ForEachNode.new(var, iterator, stmts)
 
