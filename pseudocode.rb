@@ -44,7 +44,7 @@ class PseudoCode
         match('decrease', :variable_set, 'by', :expression) {  |_, name, _, value| AssignmentNode.new(name, value, '-=') } # -=
         match('multiply', :variable_set, 'by', :expression) {  |_, name, _, value| AssignmentNode.new(name, value, '*=') } # *=
         match('divide', :variable_set, 'by', :expression) {  |_, name, _, value| AssignmentNode.new(name, value, '/=') } # /=
-        match(:variable_set, 'holds', :expression_list) { |name, _, value| AssignmentNode.new(name, value, 'array') } # Work in progress
+        match(:variable_set, 'holds', :expression_list) { |name, _, value| AssignmentNode.new(name, value, 'array') }
      end
 
       rule :output do
@@ -126,6 +126,7 @@ class PseudoCode
         match(:aritm_expr) { |m| m }
         match(:variable_get) { |m| m }
         match(:string) { |m| m }
+        match(:array) { |m| m }
         #       match(:func_exec)
       end
       
@@ -240,6 +241,11 @@ class PseudoCode
 
       rule :string do
         match(/".*"/) { |m| m.to_s[1..-2] }
+      end
+      
+      rule :array do
+        match('[', :expression_list, ']') { |_, m, _| m }
+        match('[', ']') { ArrayNode.new() }
       end
     end
   end

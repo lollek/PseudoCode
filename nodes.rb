@@ -263,7 +263,7 @@ end
 
 class ArrayNode < SuperNode
   attr_reader :values
-  def initialize(values)
+  def initialize(values=[])
     @values = values
   end
   

@@ -1,0 +1,23 @@
+#yoloyolo
+if true then
+  # Hej hej!
+  testA equals "A"
+  testB equals "B"
+  write testA
+  if false then
+    write "false"
+  else if true then
+    testC equals "C"
+    write testA
+    write testC
+    if true then #hashtag
+      write testA    
+      testC equals "CC"
+      if false then
+        write "false" #
+      else if true then
+        testD equals "D"
+        write testA
+        write testB
+        write testC
+        write testD
