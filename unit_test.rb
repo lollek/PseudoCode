@@ -156,15 +156,15 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_output("testVarA equals 2\ntestVarB equals 1 plus testVarA\nwrite testVarB", "3")
     assert_output("testVarA equals 2\ntestVarB equals testVarA plus 1\nwrite testVarB", "3")
     assert_output("testVarA equals 2\ntestVarB equals (testVarA plus 1)\nwrite testVarB", "3")
-    assert_output("testVar holds 1,2,3,5,6\nwrite testVar", "[1, 2, 3, 5, 6]")
-    assert_output("testVar holds \"A\", \"B\", \"C\"\nwrite testVar", '["A", "B", "C"]')
-    assert_output("testVar holds 1,2,[4,5,6],3\nwrite testVar", "[1, 2, [4, 5, 6], 3]")
-    assert_output("testVar holds 1\nwrite testVar", "[1]")
-    assert_output("testVar holds 1,2\nwrite testVar", "[1, 2]")
+    assert_output("testVar equals [1,2,3,5,6]\nwrite testVar", "[1, 2, 3, 5, 6]")
+    assert_output("testVar equals [\"A\", \"B\", \"C\"]\nwrite testVar", '["A", "B", "C"]')
+    assert_output("testVar equals [1,2,[4,5,6],3]\nwrite testVar", "[1, 2, [4, 5, 6], 3]")
+    assert_output("testVar equals [1]\nwrite testVar", "[1]")
+    assert_output("testVar equals [1,2]\nwrite testVar", "[1, 2]")
     assert_output("testVar equals [4]\nwrite testVar", "[4]")
     assert_output("testVar equals [4,5]\nwrite testVar", "[4, 5]")
     assert_output("testVar equals [4,5,6]\nwrite testVar", "[4, 5, 6]")
-    assert_output("testArray holds 4,5,6\ntestVar holds 1,2,testArray,3\nwrite testVar", "[1, 2, [4, 5, 6], 3]")
+    assert_output("testArray equals [4,5,6]\ntestVar equals [1,2,testArray,3]\nwrite testVar", "[1, 2, [4, 5, 6], 3]")
   end
 
   def variables

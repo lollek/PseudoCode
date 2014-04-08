@@ -44,8 +44,7 @@ class PseudoCode
         match('decrease', :variable_set, 'by', :expression) {  |_, name, _, value| AssignmentNode.new(name, value, '-=') } # -=
         match('multiply', :variable_set, 'by', :expression) {  |_, name, _, value| AssignmentNode.new(name, value, '*=') } # *=
         match('divide', :variable_set, 'by', :expression) {  |_, name, _, value| AssignmentNode.new(name, value, '/=') } # /=
-        match(:variable_set, 'holds', :expression_list) { |name, _, value| AssignmentNode.new(name, value, 'array') }
-     end
+      end
 
       rule :output do
         match('write', :expression) { |_, m| WriteNode.new(m) }
