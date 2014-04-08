@@ -202,8 +202,8 @@ class PseudoCode
 #     end
       
       rule :parameters do
-        match(:variable_get, ',', :parameters) { |a, _, b| [a] + b.flatten }
-        match(:variable_get) { |m| [m] }
+        match(:identifier, ',', :parameters) { |a, _, b| [a] + b.flatten }
+        match(:identifier) { |m| [m] }
       end
 
 #     rule :return_stmt do
