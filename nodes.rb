@@ -31,21 +31,36 @@ class Scope
   def initialize(parent=nil)
     @parent = parent
     @variables = {}
+    @functions = {}
   end
 
-  def set(name, value)
-    if @parent and @parent.get(name)
-      @parent.set(name, value)
+  def set_var(name, value)
+    if @parent and @parent.get_var(name)
+      @parent.set_var(name, value)
     else
       @variables[name] = value
     end
   end
   
-  def get(name)
+  def get_var(name)
     if @variables.include?(name)
       @variables[name]
     elsif @parent
-      @parent.get(name)
+      @parent.get_var(name)
+    else
+      nil
+    end
+  end
+
+  def set_func(name, node)
+    @functions[name] = node
+  end
+
+  def get_func(name)
+    if @functions.include?(name)
+      @functions[name]
+    elsif @parent
+      @parent.get_func(name)
     else
       nil
     end
@@ -60,12 +75,12 @@ class AssignmentNode < SuperNode
   def evaluate(scope)
     value = @value.class.superclass == SuperNode ? @value.evaluate(scope) : @value
     case @op
-    when nil then scope.set(@name, value) # =
-    when '+=' then scope.set(@name, scope.get(@name) + value)
-    when '-=' then scope.set(@name, scope.get(@name) - value)
-    when '*=' then scope.set(@name, scope.get(@name) * value)
-    when '/=' then scope.set(@name, scope.get(@name) / value)
-    when 'array' then scope.set(@name, value)
+    when nil then scope.set_var(@name, value) # =
+    when '+=' then scope.set_var(@name, scope.get_var(@name) + value)
+    when '-=' then scope.set_var(@name, scope.get_var(@name) - value)
+    when '*=' then scope.set_var(@name, scope.get_var(@name) * value)
+    when '/=' then scope.set_var(@name, scope.get_var(@name) / value)
+    when 'array' then scope.set_var(@name, value)
     end
   end
 end
@@ -174,7 +189,7 @@ class LookupNode < SuperNode
   end
 
   def evaluate(scope)
-    results = scope.get(@name)
+    results = scope.get_var(@name)
     raise "ERROR: Variable does not exist!" if results.nil?
     results
   end
@@ -293,3 +308,23 @@ class ArrayNode < SuperNode
     ArrayNode.new(@values + array.values)
   end
 end
+
+class FunctionDeclarationNode < SuperNode
+  def initialize(name, stmts, params=[])
+    @name, @parameters, @statements = name, params, stmts
+  end
+
+  def evaluate(scope)
+    scope.set_func(@name, FunctionNode.new(@parameters, @statements))
+  end
+end
+
+class FunctionNode < SuperNode
+  def initialize(params, stmts)
+    @parameters, @statements = params, stmts
+  end
+
+  def evaluate(parent_scope)
+    scope = Scope.new(parent_scope)
+    @parameters.each do |p| 
+  end

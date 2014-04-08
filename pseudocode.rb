@@ -32,7 +32,7 @@ class PseudoCode
         match(:condition) { |m| m }
         match(:loop) { |m| m }
 #        match(:expression) { |m| m }
-#        match(:func_decl) { |m| m }
+        match(:func_decl) { |m| m }
 #        match(:func_exec) { |m| m }
 #        match(:return_stmt) { |m| m }
         match(:newline) { [] }
@@ -96,11 +96,11 @@ class PseudoCode
       end
       
       rule :foreach do
-        match('for', 'each', :variable, 'in', :expression, 'do', 
+        match('for', 'each', :identifier, 'in', :expression, 'do', 
               :newline, :indent, :statements, :dedent) do
           |_, _, var, _, iterator, _, _, _, stmts, _| ForEachNode.new(var, iterator, stmts)
         end 
-        match('for', 'each', :variable, :from, 'do', :newline, :indent, :statements, :dedent) do
+        match('for', 'each', :identifier, :from, 'do', :newline, :indent, :statements, :dedent) do
           |_, _, var, iterator, _, _, _, stmts, _| ForEachNode.new(var, iterator, stmts)
 
         end
@@ -186,23 +186,25 @@ class PseudoCode
         match(:variable_get) { |m| m }
       end
 
-#     rule :func_decl do
-#        match(:func_name, :parameters, 'does', '\n', '\t', :statements, DEDENT) # work in progress
-#     end
+      rule :func_decl do
+        match(:identifier, 'with', :parameters, 'does', :newline, :indent, :statements, :dedent) do 
+          |name, _, params, _, _, _, stmts, _|
+          FunctionDeclarationNode.new(name, stmts, params)
+        end
+        match(:identifier, 'does', :newline, :indent, :statements, :dedent) do 
+          |name, _, _, _, stmts, _|
+          FunctionDeclarationNode.new(name, stmts)
+        end
+      end
       
 #     rule :func_exec do
 #       match('do', :func_name, :parameters)
 #     end
-
-#     rule :parameters do
-#       match('with', :variable_list)
-#       match(:empty)
-#     end
-
-#     rule :variable_list do
-#       match(:variable_get)
-#       match(:variable_get, ',', :variable_list)
-#     end
+      
+      rule :parameters do
+        match(:variable_get, ',', :parameters) { |a, _, b| [a] + b.flatten }
+        match(:variable_get) { |m| [m] }
+      end
 
 #     rule :return_stmt do
 #       match('return', :expression, '\n') { |_, m, _| m }
@@ -221,16 +223,16 @@ class PseudoCode
         match(Float) { |m| m}
       end
       
-      rule :variable do
+      rule :identifier do
         match(/^[a-zA-Z]+$/) { |m| m }
       end
 
       rule :variable_get do
-        match(:variable) { |m| LookupNode.new(m) }
+        match(:identifier) { |m| LookupNode.new(m) }
       end
 
       rule :variable_set do
-        match(:variable) { |m| m }
+        match(:identifier) { |m| m }
       end
 
       rule :bool do
