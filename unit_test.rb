@@ -212,7 +212,7 @@ class TestPseudoCode < Test::Unit::TestCase
       assert_output("testVar equals 0\nwhile testVar is less than 10 do\n  write testVar\n  increase testVar by 1\n\n", "0123456789")
   end
 
-  def test_foreach
+  def foreach
     assert_output("for each number from 0 to 10 do\n  write number\n", "012345678910")
     assert_output("for each number from 10 to 0 do\n  write number\n", "109876543210")
     assert_output("testVar equals 2\nfor each number from testVar to -2 do\n  write number\n", "210-1-2")
@@ -240,5 +240,14 @@ class TestPseudoCode < Test::Unit::TestCase
 
   def indentation
 #    assert_file("indent1.pc", "AACAABCCD")
+  end
+
+  def functions
+    #assert_file("functions.pc", "New output!Hej!Hej!Hej!Hej!Hej!New output!Hej!Hej!Hej!Hej!Hej!Hej!HHHEEEJJJ1111222233334444")
+  end
+
+  def test_return
+    assert_file("returns.pc", "")
+    assert_file("returns2.pc", "number is 1number is 2")
   end
 end

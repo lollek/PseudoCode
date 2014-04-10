@@ -33,8 +33,8 @@ class PseudoCode
         match(:loop) { |m| m }
 #        match(:expression) { |m| m }
         match(:func_decl) { |m| m }
-#        match(:func_exec) { |m| m }
-#        match(:return_stmt) { |m| m }
+        match(:func_exec) { |m| m }
+        match(:return_stmt) { |m| m }
         match(:newline) { [] }
       end
 
@@ -96,44 +96,44 @@ class PseudoCode
       end
       
       rule :foreach do
-        match('for', 'each', :identifier, 'in', :expression, 'do', 
+        match('for', 'each', :identifier, 'in', :expression, 'do',
               :newline, :indent, :statements, :dedent) do
           |_, _, var, _, iterator, _, _, _, stmts, _| ForEachNode.new(var, iterator, stmts)
-        end 
+        end
         match('for', 'each', :identifier, :from, 'do', :newline, :indent, :statements, :dedent) do
           |_, _, var, iterator, _, _, _, stmts, _| ForEachNode.new(var, iterator, stmts)
 
         end
       end
-      
+
       rule :while do
         match('while', :bool_expr, 'do', :newline, :indent, :statements, :dedent) do
           |_, expr, _, _ , _, stmts, _|
           WhileNode.new(expr, stmts)
         end
       end
-      
+
       rule :from do
         match('from', :variable_get, 'to', :variable_get) { |_, start, _, stop| FromNode.new(start, stop) }
         match('from', :variable_get, 'to', :integer) { |_, start, _, stop| FromNode.new(start, stop) }
         match('from', :integer, 'to', :variable_get) { |_, start, _, stop| FromNode.new(start, stop) }
         match('from', :integer, 'to', :integer) { |_, start, _, stop| FromNode.new(start, stop) }
       end
-      
+
       rule :expression do
         match(:bool_expr) { |m| m }
         match(:aritm_expr) { |m| m }
         match(:variable_get) { |m| m }
         match(:string) { |m| m }
         match(:array) { |m| m }
-        #       match(:func_exec)
+#        match(:func_exec) { |m| m }
       end
-      
+
       rule :expression_list do
-        match(:expression, ',', :expression_list) { |a, _, b| ArrayNode.new([a]) + b } 
+        match(:expression, ',', :expression_list) { |a, _, b| ArrayNode.new([a]) + b }
         match(:expression) { |m| ArrayNode.new([m]) }
       end
-      
+
       rule :bool_expr do
         match(:bool_expr, 'and', :simple_bool) { |e, _, f| BoolAndNode.new(e,f) }
         match(:bool_expr, 'or', :simple_bool) { |e, _, f| BoolOrNode.new(e,f) }
@@ -197,18 +197,23 @@ class PseudoCode
         end
       end
       
-#     rule :func_exec do
-#       match('do', :func_name, :parameters)
-#     end
+      rule :func_exec do
+        match('do', :identifier, 'with', :expression_list) do
+          |_, name, _, params| FunctionExecutionNode.new(name, params)
+        end
+        match('do', :identifier) do
+          |_, name| FunctionExecutionNode.new(name)
+        end
+      end
       
       rule :parameters do
         match(:identifier, ',', :parameters) { |a, _, b| [a] + b.flatten }
         match(:identifier) { |m| [m] }
       end
 
-#     rule :return_stmt do
-#       match('return', :expression, '\n') { |_, m, _| m }
-#     end
+      rule :return_stmt do
+        match('return', :expression) { |_, m| ReturnValue.new(m) }
+      end
 
       rule :number do
         match(:float) { |m| m}

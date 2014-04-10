@@ -11,18 +11,10 @@ class ProgramNode < SuperNode
   end
 
   def evaluate
-    @statements.each { |s| s.evaluate(@@variables) }
-    nil
-  end
-end
-
-class StatementNode < SuperNode
-  def initialize(statements)
-    @statements = statements
-  end
-
-  def evaluate(scope)
-    @statements.each { |s| s.evaluate(scope) }
+    @statements.each do |s| 
+      return s.value if s.class == ReturnValue
+      s.evaluate(@@variables)
+    end
     nil
   end
 end
@@ -73,7 +65,11 @@ class AssignmentNode < SuperNode
   end
 
   def evaluate(scope)
-    value = @value.class.superclass == SuperNode ? @value.evaluate(scope) : @value
+    value = @value
+    if @value.class.superclass == SuperNode && @value.class != ArrayNode
+      value = @value.evaluate(scope)
+    end
+
     case @op
     when nil then scope.set_var(@name, value) # =
     when '+=' then scope.set_var(@name, scope.get_var(@name) + value)
@@ -106,7 +102,12 @@ class ConditionNode < SuperNode
     scope = Scope.new(parent_scope)
     expression = @expression.class.superclass == SuperNode ? @expression.evaluate(scope) : @expression
     if expression
-      @statements.each { |s| s.evaluate(scope) }
+      @statements.each do |s| 
+        p "s.class: #{s.class} #{s.class == ReturnValue}"
+        return s.value if s.class == ReturnValue
+
+        s.evaluate(scope)
+      end
     elsif @elseif != nil
       @elseif.evaluate(scope)
     end
@@ -122,8 +123,12 @@ class WhileNode < SuperNode
   def evaluate(parent_scope)
     scope = Scope.new(parent_scope)
     while @expression.class.superclass == SuperNode ? @expression.evaluate(scope) : @expression
-      @statements.each { |s| s.evaluate(scope) }
+      @statements.each do |s| 
+        return s.value if s.class == ReturnValue
+        s.evaluate(scope)
+      end
     end
+    nil
   end
 end
 
@@ -134,33 +139,49 @@ class ForEachNode < SuperNode
 
   def evaluate(parent_scope)
     scope = Scope.new(parent_scope)
+    iterator = @iterator
     if @iterator.class == LookupNode
-      @iterator = @iterator.evaluate(scope)
+      iterator = @iterator.evaluate(scope)
     end
 
-    if @iterator.class == FromNode
-      while AssignmentNode.new(@var, @iterator.evaluate(scope)).evaluate(scope)
-        @statements.each { |s| s.evaluate(scope) }
+    if iterator.class == FromNode
+      while AssignmentNode.new(@var, iterator.evaluate(scope)).evaluate(scope)
+        @statements.each do |s| 
+          return s.value if s.class == ReturnValue
+          s.evaluate(scope)
+        end
       end
-    elsif @iterator.class == String
-      @iterator.each_char do |letter|
+      iterator.reset
+    elsif iterator.class == String
+      iterator.each_char do |letter|
         AssignmentNode.new(@var, letter).evaluate(scope)
-        @statements.each { |s| s.evaluate(scope) }
+        @statements.each do |s|
+          return s.value if s.class == ReturnValue
+          s.evaluate(scope)
+        end
       end
-    elsif @iterator.class == ArrayNode
-      @iterator.evaluate(scope).each do |element|
+    elsif iterator.class == ArrayNode
+      iterator.evaluate(scope).each do |element|
         AssignmentNode.new(@var, element).evaluate(scope)
-        @statements.each { |s| s.evaluate(scope) }
+        @statements.each do |s| 
+          return s.value if s.class == ReturnValue
+          s.evaluate(scope)
+        end
       end
     else
-      raise "Bad iterator class (#{@iterator.class}) received!"
+      raise "Bad iterator class (#{iterator.class}) received!"
     end
+    nil
   end
 end
 
 class FromNode < SuperNode
   def initialize(start, stop)
     @start, @stop = start, stop
+    @has_been_initialized = false
+  end
+  
+  def reset
     @has_been_initialized = false
   end
 
@@ -252,9 +273,25 @@ class WriteNode < SuperNode
   def initialize(value)
     @value = value
   end
+
+  def expand(value, scope)
+    if value.class == LookupNode
+      expand(value.evaluate(scope), scope)
+    elsif value.class == ArrayNode
+      expand(value.evaluate(scope), scope)
+    elsif value.class == Array
+      value.map { |e| expand(e, scope) }
+    elsif value.class.superclass == SuperNode
+      expand(value.evaluate(scope), scope)
+    else
+      value
+    end
+  end
+
   def evaluate(scope)
-    value = @value.class.superclass == SuperNode ? @value.evaluate(scope) : @value
+    value = expand(@value, scope)
     File.open("f", "a") { |f| f.print value }
+    nil
   end
 end
 
@@ -301,7 +338,7 @@ class ArrayNode < SuperNode
   end
   
   def evaluate(scope)
-    @values.map { |a| a.class.superclass == SuperNode ? a.evaluate(scope) : a }
+    @values
   end
 
   def +(array)
@@ -316,15 +353,50 @@ class FunctionDeclarationNode < SuperNode
 
   def evaluate(scope)
     scope.set_func(@name, FunctionNode.new(@parameters, @statements))
+    nil
+  end
+end
+
+class FunctionExecutionNode < SuperNode
+  def initialize(name, params=ArrayNode.new([]))
+    @name, @parameters = name, params
+  end
+
+  def evaluate(scope)
+    scope.get_func(@name).evaluate(scope, @parameters.evaluate(scope))
   end
 end
 
 class FunctionNode < SuperNode
   def initialize(params, stmts)
-    @parameters, @statements = params, stmts
+    @param_names, @statements = params, stmts
   end
 
-  def evaluate(parent_scope)
+  def evaluate(parent_scope, param_values=[])
+    raise "Parameter mismatch! Expected #{@param_names.length}, found #{param_values.length}" unless @param_names.length == param_values.length
     scope = Scope.new(parent_scope)
-    @parameters.each do |p| 
+    @param_names.each_index do |i| 
+      AssignmentNode.new(@param_names[i], param_values[i]).evaluate(scope)
+    end
+    @statements.each do |s| 
+      return s.value if s.class == ReturnValue
+      s.evaluate(scope)
+    end
+    nil
   end
+end
+
+class ReturnValue
+  attr_reader :value
+  def initialize(value)
+    @value = value
+  end
+  
+  def evaluate(scope)
+    if @value.class.superclass == SuperNode
+      @value.evaluate(scope)
+    else
+      @value
+    end
+  end
+end

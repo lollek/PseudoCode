@@ -1,0 +1,24 @@
+myFunction does
+  write "Function output!"
+
+myFunction does
+  write "New output!"
+
+do myFunction
+
+parameterFunction with paramA, paramB does
+  for each number from paramA to paramB do
+    write "Hej!"
+
+do parameterFunction with 0, 1
+do parameterFunction with 1, 3
+do myFunction
+do parameterFunction with 1, 6
+
+parameterFunctionTwo with paramA, paramB does
+  for each letter in paramA do
+    for each n from 1 to paramB do
+      write letter
+
+do parameterFunctionTwo with "HEJ", 3
+do parameterFunctionTwo with [1, 2, 3, 4], 4

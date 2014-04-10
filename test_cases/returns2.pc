@@ -1,0 +1,6 @@
+for each r in [1,2,3,4] do
+  write "number is "
+  write r
+  if r is 2 or more then
+    return r
+    write "hej"
