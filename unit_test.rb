@@ -83,7 +83,7 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_output("write 6 plus (3 times 2)", "12")
   end
 
-  def bool_expr
+  def test_bool_expr
     # not
     assert_output("write not true", "false")
     assert_output("write not false", "true")
@@ -99,6 +99,18 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_output("write false or false", "false")
     assert_output("write true or true", "true")
     assert_output("write true or false", "true")
+    
+    # is
+    assert_output("write 4 is 4", "true")
+    #assert_output("write \"papperstiger\" is \"papperstiger\"", "true")
+    #assert_output("write \"flaska\" is \"bottle\"", "false")
+    #assert_output("write [1,2] is [1,2]", "true")
+    #assert_output("write [1,2] is [1,2,3]", "false")
+    #assert_output("write [1,2,4] is [1,2,3]", "false")
+    assert_output("panda equals 42\nwrite panda is panda", "true")
+    assert_output("panda equals 42\nwrite panda is 42", "true")
+    assert_output("panda equals 42\nwrite 42 is panda", "true")
+    assert_output("panda equals 42\nwrite 43 is panda", "false")
 
     # Complex
     assert_output("write (false and true) or false", "false")
@@ -212,7 +224,7 @@ class TestPseudoCode < Test::Unit::TestCase
       assert_output("testVar equals 0\nwhile testVar is less than 10 do\n  write testVar\n  increase testVar by 1\n\n", "0123456789")
   end
 
-  def test_foreach
+  def foreach
     assert_output("for each number from 0 to 10 do\n  write number\n", "012345678910")
     assert_output("for each number from 10 to 0 do\n  write number\n", "109876543210")
     assert_output("testVar equals 2\nfor each number from testVar to -2 do\n  write number\n", "210-1-2")
@@ -240,15 +252,19 @@ class TestPseudoCode < Test::Unit::TestCase
   end
 
   def indentation
-#    assert_file("indent1.pc", "AACAABCCD")
+    #assert_file("indent1.pc", "AACAABCCD")
   end
 
   def functions
-    #assert_file("functions.pc", "New output!Hej!Hej!Hej!Hej!Hej!New output!Hej!Hej!Hej!Hej!Hej!Hej!HHHEEEJJJ1111222233334444")
+    assert_file("functions.pc", "New output!Hej!Hej!Hej!Hej!Hej!New output!Hej!Hej!Hej!Hej!Hej!Hej!HHHEEEJJJ1111222233334444")
   end
 
   def return
     assert_file("returns.pc", "")
     assert_file("returns2.pc", "number is 1number is 2hejbla11bla11")
+  end
+
+  def test_longer_functions
+    #assert_file("realfun.pc", "55")
   end
 end
