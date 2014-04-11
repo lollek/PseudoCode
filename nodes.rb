@@ -12,14 +12,22 @@ class ProgramNode < SuperNode
 
   def evaluate
     @statements.each do |s| 
-      return s.value if s.class == ReturnValue
-      s.evaluate(@@variables)
+      if s.class == ReturnValue
+        return s.value  if s.value == Fixnum
+        return 0
+      end
+      status = s.evaluate(@@variables)
+      if status.class == ReturnValue
+        return status.value if status.value.class == Fixnum
+        return 0
+      end
     end
-    nil
+    0
   end
 end
 
 class Scope
+  attr_reader :variables
   def initialize(parent=nil)
     @parent = parent
     @variables = {}
@@ -103,10 +111,13 @@ class ConditionNode < SuperNode
     expression = @expression.class.superclass == SuperNode ? @expression.evaluate(scope) : @expression
     if expression
       @statements.each do |s| 
-        p "s.class: #{s.class} #{s.class == ReturnValue}"
-        return s.value if s.class == ReturnValue
-
-        s.evaluate(scope)
+        if s.class == ReturnValue
+          s.evaluate_value(scope)
+          return s
+        else
+          return_value = s.evaluate(scope)
+          return return_value if return_value.class == ReturnValue
+        end
       end
     elsif @elseif != nil
       @elseif.evaluate(scope)
@@ -124,8 +135,13 @@ class WhileNode < SuperNode
     scope = Scope.new(parent_scope)
     while @expression.class.superclass == SuperNode ? @expression.evaluate(scope) : @expression
       @statements.each do |s| 
-        return s.value if s.class == ReturnValue
-        s.evaluate(scope)
+        if s.class == ReturnValue
+          s.evaluate_value(scope)
+          return s
+        else
+          return_value = s.evaluate(scope)
+          return return_value if return_value.class == ReturnValue
+        end
       end
     end
     nil
@@ -147,8 +163,13 @@ class ForEachNode < SuperNode
     if iterator.class == FromNode
       while AssignmentNode.new(@var, iterator.evaluate(scope)).evaluate(scope)
         @statements.each do |s| 
-          return s.value if s.class == ReturnValue
-          s.evaluate(scope)
+          if s.class == ReturnValue
+            s.evaluate_value(scope)
+            return s
+          else
+            return_value = s.evaluate(scope)
+            return return_value if return_value.class == ReturnValue
+          end
         end
       end
       iterator.reset
@@ -156,16 +177,26 @@ class ForEachNode < SuperNode
       iterator.each_char do |letter|
         AssignmentNode.new(@var, letter).evaluate(scope)
         @statements.each do |s|
-          return s.value if s.class == ReturnValue
-          s.evaluate(scope)
+          if s.class == ReturnValue
+            s.evaluate_value(scope)
+            return s
+          else
+            return_value = s.evaluate(scope)
+            return return_value if return_value.class == ReturnValue
+          end
         end
       end
     elsif iterator.class == ArrayNode
       iterator.evaluate(scope).each do |element|
         AssignmentNode.new(@var, element).evaluate(scope)
-        @statements.each do |s| 
-          return s.value if s.class == ReturnValue
-          s.evaluate(scope)
+        @statements.each do |s|
+          if s.class == ReturnValue
+            s.evaluate_value(scope)
+            return s
+          else
+            return_value = s.evaluate(scope)
+            return return_value if return_value.class == ReturnValue
+          end
         end
       end
     else
@@ -211,7 +242,10 @@ class LookupNode < SuperNode
 
   def evaluate(scope)
     results = scope.get_var(@name)
-    raise "ERROR: Variable does not exist!" if results.nil?
+    if results.nil?
+      p scope.variables
+      raise "ERROR: Variable does not exist!"
+    end
     results
   end
 end
@@ -379,8 +413,12 @@ class FunctionNode < SuperNode
       AssignmentNode.new(@param_names[i], param_values[i]).evaluate(scope)
     end
     @statements.each do |s| 
-      return s.value if s.class == ReturnValue
-      s.evaluate(scope)
+      if s.class == ReturnValue
+        s.evaluate_value(scope)
+        return s.value
+      else
+        s.evaluate(scope)
+      end
     end
     nil
   end
@@ -392,11 +430,7 @@ class ReturnValue
     @value = value
   end
   
-  def evaluate(scope)
-    if @value.class.superclass == SuperNode
-      @value.evaluate(scope)
-    else
-      @value
-    end
+  def evaluate_value(scope)
+    @value = @value.evaluate(scope) if @value.class.superclass == SuperNode
   end
 end

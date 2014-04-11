@@ -248,6 +248,6 @@ class TestPseudoCode < Test::Unit::TestCase
 
   def test_return
     assert_file("returns.pc", "")
-    assert_file("returns2.pc", "number is 1number is 2")
+    assert_file("returns2.pc", "number is 1number is 2hejbla11bla11")
   end
 end

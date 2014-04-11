@@ -121,12 +121,12 @@ class PseudoCode
       end
 
       rule :expression do
+        match(:func_exec) { |m| m }
         match(:bool_expr) { |m| m }
         match(:aritm_expr) { |m| m }
         match(:variable_get) { |m| m }
         match(:string) { |m| m }
         match(:array) { |m| m }
-#        match(:func_exec) { |m| m }
       end
 
       rule :expression_list do

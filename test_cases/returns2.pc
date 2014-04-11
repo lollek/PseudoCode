@@ -1,6 +1,24 @@
-for each r in [1,2,3,4] do
-  write "number is "
-  write r
-  if r is 2 or more then
-    return r
+returnTest does
+  for each r in [1,2,3,4] do
+    write "number is "
+    write r
+    if r is 2 or more then
+      return r
+      write "hej"
+
+do returnTest
+
+returnTestWhile does
+  while true do
     write "hej"
+    return 7
+
+do returnTestWhile
+
+myFunction does
+  write "bla"
+  return 5 plus 2 times 3
+
+testVar equals do myFunction
+write testVar
+write do myFunction
