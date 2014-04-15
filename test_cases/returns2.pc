@@ -22,3 +22,36 @@ myFunction does
 testVar equals do myFunction
 write testVar
 write do myFunction
+
+
+returnIfOne with number does
+  if true then
+    return "returnIfOne"
+
+write do returnIfOne with 1
+
+returnifTwo does
+  if false then
+    return 0
+  else if true then
+    return "returnifTwo"
+
+write do returnifTwo
+
+returnifThree does
+  if false then
+    return 0
+  else
+    return "returnifThree"
+
+write do returnifThree
+
+returnif does
+  if false then
+    return 0
+  else if false then
+    return 1
+  else
+    return "returnif"
+
+write do returnif

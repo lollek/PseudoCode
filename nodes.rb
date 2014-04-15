@@ -117,6 +117,7 @@ class ConditionNode < SuperNode
     scope = Scope.new(parent_scope)
     if @expression.evaluate(scope)
       @statements.each do |s| 
+        p "CLASSSSSSSS", s.class
         if s.class == ReturnValue
           return s.evaluate(scope)
         else
@@ -125,7 +126,8 @@ class ConditionNode < SuperNode
         end
       end
     elsif @elseif != nil
-      @elseif.evaluate(scope)
+      return_value = @elseif.evaluate(scope)
+      return return_value if return_value.class == ReturnValue
     end
     nil
   end
@@ -354,11 +356,13 @@ class FunctionNode < SuperNode
     @param_names.each_index do |i| 
       AssignmentNode.new(@param_names[i], param_values[i]).evaluate(scope)
     end
+    puts "#{self}: #{parent_scope.inspect} | #{scope.inspect}"
     @statements.each do |s| 
       if s.class == ReturnValue
         return s.evaluate(scope).value
       else
-        s.evaluate(scope)
+        return_value = s.evaluate(scope)
+        return return_value.value if return_value.class == ReturnValue
       end
     end
     nil

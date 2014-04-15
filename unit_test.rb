@@ -83,7 +83,7 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_output("write 6 plus (3 times 2)", "12")
   end
 
-  def test_bool_expr
+  def bool_expr
     # not
     assert_output("write not true", "false")
     assert_output("write not false", "true")
@@ -198,7 +198,7 @@ class TestPseudoCode < Test::Unit::TestCase
 #    assert_output("read to testVar\nwrite testVar", "hej")
 #  end
 
- def test_if
+ def if
     assert_output("if true then\n  write \"TRUE\"\n", "TRUE")
     assert_output("if false then\n  write \"FALSE\"\n", "")
     assert_output("if true then\n  write \"TRUE\"\n  testVar equals 42\n  write testVar\n", "TRUE42")
@@ -251,7 +251,7 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_file("scope1.pc", "1")
   end
 
-  def test_indentation
+  def indentation
     assert_file("indent1.pc", "AACAABCCD")
   end
 
@@ -261,11 +261,11 @@ class TestPseudoCode < Test::Unit::TestCase
 
   def return
     assert_file("returns.pc", "")
-    assert_file("returns2.pc", "number is 1number is 2hejbla11bla11")
+    assert_file("returns2.pc", "number is 1number is 2hejbla11bla11returnIfOnereturnifTworeturnifThreereturnif")
   end
 
-  def longer_functions
-    #assert_file("realfun.pc", "55")
+  def test_longer_functions
+    assert_file("realfun.pc", "55")
   end
 end
 
