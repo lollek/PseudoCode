@@ -198,7 +198,7 @@ class TestPseudoCode < Test::Unit::TestCase
 #    assert_output("read to testVar\nwrite testVar", "hej")
 #  end
 
- def if
+ def test_if
     assert_output("if true then\n  write \"TRUE\"\n", "TRUE")
     assert_output("if false then\n  write \"FALSE\"\n", "")
     assert_output("if true then\n  write \"TRUE\"\n  testVar equals 42\n  write testVar\n", "TRUE42")
@@ -251,8 +251,8 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_file("scope1.pc", "1")
   end
 
-  def indentation
-    #assert_file("indent1.pc", "AACAABCCD")
+  def test_indentation
+    assert_file("indent1.pc", "AACAABCCD")
   end
 
   def functions
@@ -264,7 +264,9 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_file("returns2.pc", "number is 1number is 2hejbla11bla11")
   end
 
-  def test_longer_functions
+  def longer_functions
     #assert_file("realfun.pc", "55")
   end
 end
+
+

@@ -56,33 +56,31 @@ class PseudoCode
         match('write', :variable_get) { |_, m| WriteNode.new(m) }
         match('write', :string) { |_, m| WriteNode.new(m) }
       end
-
+      
       rule :input do
         match('read', 'to', :variable_set) { |_, _, var_name| InputNode.new(var_name) }
       end
       
       rule :condition do
-        match('if', :bool_expr, 'then', :newline, :indent, :statements, 
-              :dedent, :newline, :condition_elseif) do |_, if_expr, _, _, _, if_stmts, _, _, elseif| 
-          ConditionNode.new(if_expr, if_stmts, elseif); end
-        match('if', :bool_expr, 'then', :newline, :indent, :statements, 
-              :dedent, :newline, :condition_else) do |_, if_expr, _, _, _, if_stmts, _, _, else_| 
-          ConditionNode.new(if_expr, if_stmts, else_); end
-        match('if', :bool_expr, 'then', :newline, 
-              :indent, :statements, :dedent) do |_, if_expr, _, _, _, if_stmts, _, _| 
-          ConditionNode.new(if_expr, if_stmts); end
+        match('if', :bool_expr, 'then', :newline, :indent, :statements, :condition_tail) do 
+          |_, if_expr, _, _, _, if_stmts, elseif| ConditionNode.new(if_expr, if_stmts, elseif); end
       end
-     
+      
+      rule :condition_tail do
+        match(:dedent, :newline, :condition_elseif) { |_, _, elseif| elseif }
+        match(:dedent, :newline, :condition_else) { |_, _, else_| else_ }
+        match(:dedent)
+      end
+      
       rule :condition_elseif do
-        match('else', 'if', :bool_expr, 'then', :newline, :indent, :statements, 
-              :dedent, :newline, :condition_elseif) do |_, _, if_expr, _, _, _, if_stmts, _, _, elseif| 
-          ConditionNode.new(if_expr, if_stmts, elseif); end
-        match('else', 'if', :bool_expr, 'then', :newline, :indent, :statements, 
-              :dedent, :newline, :condition_else) do |_, _, if_expr, _, _, _, if_stmts, _, _, else_| 
-          ConditionNode.new(if_expr, if_stmts, else_); end
-        match('else', 'if', :bool_expr, 'then',
-              :newline, :indent, :statements, :dedent) do |_, _, if_expr, _, _, _, if_stmts, _| 
-          ConditionNode.new(if_expr, if_stmts); end
+        match('else', 'if', :bool_expr, 'then', :newline, :indent, :statements, :condition_elseif_tail) do
+          |_, _, if_expr, _, _, _, if_stmts, elseif| ConditionNode.new(if_expr, if_stmts, elseif); end
+      end
+      
+      rule :condition_elseif_tail do
+        match(:dedent, :newline, :condition_elseif) { |_, _, elseif| elseif }
+        match(:dedent, :newline, :condition_else) { | _, _, else_| else_ }
+        match(:dedent)
       end
 
       rule :condition_else do
