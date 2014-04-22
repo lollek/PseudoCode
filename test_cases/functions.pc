@@ -2,12 +2,31 @@ myFunction does
   write "Function output!"
 
 myFunction does
+  # Beskrivning av funktionen
+  # Blah blah
+
+
+
   write "New output!"
+
+
 
 do myFunction
 
+
+
+
+
+
+
+
 parameterFunction with paramA, paramB does
+
+
+
   for each number from paramA to paramB do
+
+
     write "Hej!"
 
 do parameterFunction with 0, 1

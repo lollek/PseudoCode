@@ -264,9 +264,17 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_file("returns2.pc", "number is 1number is 2hejbla11bla11returnIfOnereturnifTworeturnifThreereturnif")
   end
 
-  def test_longer_functions
+  def longer_functions
     assert_file("realfun.pc", "55")
   end
+
+  def comments
+    assert_output("#hej", "");
+    assert_output("#hej\n", "");
+  end
+  
+  def test_parantheses
+    assert_output("write 1 plus 2", "3")
+    assert_output("write 1 plus (2)", "3")
+  end
 end
-
-

@@ -282,6 +282,15 @@ class ComparisonNode < SuperNode
     when '==' then lh == rh
     end
   end
+
+  def set_lh(value)
+    if @op == 'between'
+      @middle = value
+    else
+      @lh = value
+    end
+    self
+  end
 end
 
 class AritmNode < SuperNode

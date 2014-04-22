@@ -141,14 +141,15 @@ class Parser
           string = match.post_match
 
           # check indentation and generate tokens if necessary
-          if tok.pattern == /\A\n/
+          if tok.pattern == /\A\n+/
+            @tokens << :newline if @tokens && @tokens.last != :newline
             new_indentation = /\A */.match(string)[0].length
             if new_indentation < indentation
               while not indent_stack.empty? and indent_stack.last > new_indentation
                 indent_stack.pop
                 @tokens << :dedent
               end
-              @tokens << :newline
+              @tokens << :newline 
             elsif new_indentation > indentation
               indent_stack << new_indentation
               @tokens << :indent

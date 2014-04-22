@@ -5,12 +5,12 @@ require './nodes.rb'
 class PseudoCode
   def initialize
     @parser = Parser.new("pseudo parser") do
-      token(/#.*?$/)
+      token(/#.*?$/)      # Comments
       token(/".*?"/)      { |m| m.to_s } # Strings
       token(/-?\d+\.\d+/) { |m| m.to_f } # Floats
       token(/-?\d+/)      { |m| m.to_i } # Integers
-      token(/\w+/)        { |m| m } # Variables, keywords, etc
-      token(/\n/)         { :newline } # Newline, this also causes the lexer to generate :indent and :dedent tokens
+      token(/\w+/)        { |m| m }      # Variables, keywords, etc
+      token(/\n+/)        # :newline, :indent and :dedent tokens
       token(/[^ ]/)       { |m| m } # Non-space characters
       token(/./)
 
@@ -19,9 +19,9 @@ class PseudoCode
       end
 
       rule :statements do
-        match(:statement, :newline, :statements) { |a, _, b| [a].flatten + b.flatten }
-        match(:statement, :newline) { |a, _| [a].flatten }
         match(:newline, :statements) { |_, a| a.flatten}
+        match(:statements, :newline, :statement) { |a, _, b| a.flatten + [b].flatten }
+        match(:statements, :newline) { |a, _| [a].flatten }
         match(:statement) { |m| [m].flatten }
       end
 
@@ -34,7 +34,7 @@ class PseudoCode
         match(:func_decl) { |m| m }
         match(:func_exec) { |m| m }
         match(:return_stmt) { |m| m }
-        match(:newline) { [] }
+        match(:newline)
       end
 
      rule :assignment do
@@ -125,7 +125,7 @@ class PseudoCode
       end
 
       rule :expression_list do
-        match(:expression, ',', :expression_list) { |a, _, b| ArrayNode.new([a]) + b }
+        match(:expression_list, ',', :expression) { |a, _, b| a + ArrayNode.new([b]) }
         match(:expression) { |m| ArrayNode.new([m]) }
       end
 
@@ -134,28 +134,28 @@ class PseudoCode
         match(:bool_expr, 'or', :simple_bool) { |e, _, f| BoolOrNode.new(e,f) }
         match(:simple_bool) { |m| m }
       end
-
+      
       rule :simple_bool do
         match('not', :bool_expr) { |_, e| BoolNotNode.new(e) }
         match(:bool) { |m| BoolNode.new(m) }
         match(:comparison) { |m| m }
       end
-
+      
       rule :comparison do
-        match(:aritm_expr, 'is', 'less', 'than', :aritm_expr) do |e, _, _, _, f| 
-          ComparisonNode.new(e,'<',f); end
-        match(:aritm_expr, 'is', 'greater', 'than', :aritm_expr) do |e, _, _, _, f| 
-          ComparisonNode.new(e, '>', f); end
-        match(:aritm_expr, 'is', :aritm_expr, 'or', 'more') do |e, _, f, _, _| 
-          ComparisonNode.new(e, '>=', f); end
-        match(:aritm_expr, 'is', :aritm_expr, 'or', 'less') do |e, _, f, _, _| 
-          ComparisonNode.new(e, '<=', f); end
-        match(:aritm_expr, 'is', 'between', :aritm_expr, 'and', :aritm_expr) do |e, _, _, f, _, g| 
-          ComparisonNode.new(f, 'between', g, e); end
-        match(:aritm_expr, 'is', :aritm_expr) { |a, _, b| ComparisonNode.new(a, '==', b) }
+        match(:aritm_expr, 'is', :comparison_tail) { |e, _, comp_node| comp_node.set_lh(e) }
         match(:aritm_expr) { |m| m }
       end
-
+      
+      rule :comparison_tail do
+        match('less', 'than', :aritm_expr) { |_, _, e| ComparisonNode.new(nil, '<', e) }
+        match('greater', 'than', :aritm_expr) { |_, _, e| ComparisonNode.new(nil, '>', e) }
+        match(:aritm_expr, 'or', 'more') { |e, _, _| ComparisonNode.new(nil, '>=', e) }
+        match(:aritm_expr, 'or', 'less') { |e, _, _| ComparisonNode.new(nil, '<=', e) }
+        match('between', :aritm_expr, 'and', :aritm_expr) do |_, e, _, f| 
+          ComparisonNode.new(e, 'between', f, nil); end
+        match(:aritm_expr) { |e| ComparisonNode.new(nil, '==', e) }
+      end
+      
       rule :aritm_expr do
         match(:term, 'plus', :aritm_expr) { |m, _, n| AritmNode.new(m, '+', n) }
         match(:term, 'minus', :aritm_expr) { |m, _, n| AritmNode.new(m, '-', n) }
@@ -195,7 +195,7 @@ class PseudoCode
       end
       
       rule :parameters do
-        match(:identifier, ',', :parameters) { |a, _, b| [a] + b.flatten }
+        match(:parameters, ',', :identifier) { |a, _, b| a.flatten + [b] }
         match(:identifier) { |m| [m] }
       end
 
@@ -256,4 +256,3 @@ class PseudoCode
     end
   end
 end
-

@@ -1,0 +1,10 @@
+val equals 1
+valList equals [val]
+
+
+funfun with var does
+  val equals 42
+  for each element in var do
+    write element
+
+do funfun with valList
