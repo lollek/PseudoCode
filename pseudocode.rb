@@ -18,11 +18,18 @@ class PseudoCode
       token(/./)
 
       start :program do 
-        match(:statements) { |statements| ProgramNode.new(statements, scope).evaluate }
+        match(:top_level_statements) { |statements| ProgramNode.new(statements, scope).evaluate }
+      end
+
+      rule :top_level_statements do
+        match(:top_level_statements, :func_decl)  { |m, n| m.flatten + [n].flatten }
+        match(:top_level_statements, :statements) { |m, n| m.flatten + [n].flatten }
+        match(:func_decl) { |m| [m].flatten }
+        match(:statements) { |m| [m].flatten }
       end
 
       rule :statements do
-        match(:newline, :statements) { |_, a| a.flatten}
+        match(:newline, :statements) { |_, a| a.flatten }
         match(:statements, :newline, :statement) { |a, _, b| a.flatten + [b].flatten }
         match(:statements, :newline) { |a, _| [a].flatten }
         match(:statement) { |m| [m].flatten }
@@ -34,7 +41,6 @@ class PseudoCode
         match(:input) { |m| m }
         match(:condition) { |m| m }
         match(:loop) { |m| m }
-        match(:func_decl) { |m| m }
         match(:func_exec) { |m| m }
         match(:return_stmt) { |m| m }
         match(:newline)

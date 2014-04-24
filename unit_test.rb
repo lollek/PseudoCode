@@ -195,9 +195,9 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_output("testVar equals 8\ndivide testVar by 4\nwrite testVar", "2")
   end
 
-#  def input
-#    assert_output("read to testVar\nwrite testVar", "hej")
-#  end
+  def input
+    assert_output("read to testVar\nwrite testVar", "hej")
+  end
 
  def if
     assert_output("if true then\n  write \"TRUE\"\n", "TRUE")
@@ -265,7 +265,7 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_file("returns2.pc", "number is 1number is 2hejbla11bla11returnIfOnereturnifTworeturnifThreereturnif")
   end
 
-  def test_longer_functions
+  def longer_functions
 #    assert_file("realfun.pc", "55")
     assert_output("write \"hej\", \"lol\"", "hejlol")
   end
