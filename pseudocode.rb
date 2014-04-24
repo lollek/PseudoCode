@@ -1,9 +1,12 @@
+#! /usr/bin/env ruby
 # -*- coding: utf-8 -*-
+
 require './rdparse.rb'
 require './nodes.rb'
 
 class PseudoCode
-  def initialize
+  def initialize(scope=Scope.new)
+    
     @parser = Parser.new("pseudo parser") do
       token(/#.*?$/)      # Comments
       token(/".*?"/)      { |m| m.to_s } # Strings
@@ -15,7 +18,7 @@ class PseudoCode
       token(/./)
 
       start :program do 
-        match(:statements) { |statements| ProgramNode.new(statements).evaluate }
+        match(:statements) { |statements| ProgramNode.new(statements, scope).evaluate }
       end
 
       rule :statements do
@@ -42,21 +45,23 @@ class PseudoCode
           AssignmentNode.new(name, value); end
         match('increase', :variable_set, 'by', :expression) do |_, name, _, value|
           AssignmentNode.new(name, value, '+='); end # +=
-        match('decrease', :variable_set, 'by', :expression) do |_, name, _, value| 
+        match('decrease', :variable_set, 'by', :expression) do |_, name, _, value|
           AssignmentNode.new(name, value, '-='); end # -=
-        match('multiply', :variable_set, 'by', :expression) do |_, name, _, value| 
+        match('multiply', :variable_set, 'by', :expression) do |_, name, _, value|
           AssignmentNode.new(name, value, '*='); end # *=
-        match('divide', :variable_set, 'by', :expression) do |_, name, _, value| 
+        match('divide', :variable_set, 'by', :expression) do |_, name, _, value|
           AssignmentNode.new(name, value, '/='); end # /=
       end
 
       rule :output do
-        match('write', :expression) { |_, m| WriteNode.new(m) }
-        match('write', :number) { |_, m| WriteNode.new(m) }
-        match('write', :variable_get) { |_, m| WriteNode.new(m) }
-        match('write', :string) { |_, m| WriteNode.new(m) }
+        match('write', :write_list) { |_, m| WriteNode.new(m) }
       end
-      
+
+      rule :write_list do
+        match(:write_list, ',', :expression) { |a, _, b| a.flatten + [b] }
+        match(:expression) { |m| [m] }
+      end
+
       rule :input do
         match('read', 'to', :variable_set) { |_, _, var_name| InputNode.new(var_name) }
       end
@@ -248,11 +253,33 @@ class PseudoCode
     @parser.parse(str)
   end
 
+  def prompt
+    require 'readline'
+    pc = PseudoCode.new()
+    pc.log(false)
+    while input = Readline.readline(">> ", true)
+      break if input == "exit"
+      pc.parse(input)
+      puts
+    end
+  end
+
   def log(state = true)
     if state
       @parser.logger.level = Logger::DEBUG
     else
       @parser.logger.level = Logger::WARN
     end
+  end
+end
+
+if __FILE__ == $0
+  pc = PseudoCode.new()
+  pc.log(false)
+  if ARGV.empty?
+    #raise "Must supply filename!"
+    pc.prompt
+  else
+    pc.parse(File.read(ARGV[0]))
   end
 end

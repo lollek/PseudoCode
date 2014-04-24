@@ -1,13 +1,35 @@
+#fibonacci with number does
+#  newValue equals 0
+#  oldValue equals 1
+#  for each a from number to 1 do
+#    tmpValue equals newValue
+#    increase newValue by oldValue
+#    oldValue equals tmpValue
+#  return newValue
+
 fibonacci with number does
+  write "NUMBER: ", number, "\n"
   if number is 0 or less then
     return 0
   else if number is 1 then
     return 1
-  else 
-    return 2# do fibonacci with number minus 1
+  else
+    #valueOne equals do fibonacci with number minus 1
+    #valueTwo equals do fibonacci with number minus 2
+    #valueTotal equals valueOne plus valueTwo
+    #    write "Value One is ", valueOne, "\n"
+    #    write "Value Two is ", valueTwo, "\n"
+    #write "Returning ", valueTotal, "\n"
+    #return valueTotal
+    return (do fibonacci with number minus 1) plus (do fibonacci with number minus 2)
 
 #fibResults equals do fibonacci with 10
-write do fibonacci with 10
+write "\n", (do fibonacci with 10), "\n"
 #write fibResults
 
 #    return do fibonacci with (number minus 1) plus do fibonacci with (number minus 2)
+
+testFunc with n does
+  return n
+
+write (do testFunc with 10), "\n"

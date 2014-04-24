@@ -1,6 +1,7 @@
 #! /usr/bin/env ruby
 # -*- coding: utf-8 -*-
 
+$DEBUG_MODE = true
 require 'test/unit'
 require './pseudocode.rb'
 
@@ -264,8 +265,9 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_file("returns2.pc", "number is 1number is 2hejbla11bla11returnIfOnereturnifTworeturnifThreereturnif")
   end
 
-  def longer_functions
-    assert_file("realfun.pc", "55")
+  def test_longer_functions
+#    assert_file("realfun.pc", "55")
+    assert_output("write \"hej\", \"lol\"", "hejlol")
   end
 
   def comments
@@ -273,8 +275,10 @@ class TestPseudoCode < Test::Unit::TestCase
     assert_output("#hej\n", "");
   end
   
-  def test_parantheses
+  def parantheses
     assert_output("write 1 plus 2", "3")
     assert_output("write 1 plus (2)", "3")
+    assert_output("write (1) plus (2)", "3")
+    assert_output("write ((1 plus 2) plus 3)", "6")
   end
 end

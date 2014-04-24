@@ -3,31 +3,32 @@ class Object
   def evaluate(scope)
     self
   end
+
   def evaluate_all(scope)
     self
   end
 end
 
 # Custom Classes
-
 class SuperNode
-  def initialize_global_variables
-    @@variables = Scope.new
+  def initialize_global_variables(scope)
+    @@global_scope = scope
   end
+
   def evaluate_all(scope)
     evaluate(scope).evaluate_all(scope)
   end
 end
 
 class ProgramNode < SuperNode
-  def initialize(statements)
+  def initialize(statements, scope)
     @statements = statements
-    initialize_global_variables
+    initialize_global_variables(scope)
   end
 
   def evaluate
     @statements.each do |s| 
-      s = s.evaluate(@@variables) if s.class != ReturnValue
+      s = s.evaluate(@@global_scope) if s.class != ReturnValue
       if s.class == ReturnValue
         return s.value  if s.value == Fixnum
         return 0
@@ -117,7 +118,6 @@ class ConditionNode < SuperNode
     scope = Scope.new(parent_scope)
     if @expression.evaluate(scope)
       @statements.each do |s| 
-        p "CLASSSSSSSS", s.class
         if s.class == ReturnValue
           return s.evaluate(scope)
         else
@@ -203,7 +203,8 @@ class LookupNode < SuperNode
   def evaluate(scope)
     results = scope.get_var(@name)
     if results.nil?
-      raise "ERROR: Variable does not exist!"
+      p scope
+      raise "ERROR: Variable '#{@name}' does not exist!"
     end
     results
   end
@@ -260,9 +261,18 @@ class WriteNode < SuperNode
   end
 
   def evaluate(scope)
-    File.open("f", "a") { |f| f.print @value.evaluate_all(scope) }
+    if $DEBUG_MODE
+      File.open("f", "a") { |f| @value.each { |a| f.print(a.evaluate_all(scope)) } }
+    else
+      @value.each { |a| print(unescape(a.evaluate_all(scope))) }
+    end
     nil
   end
+
+  def unescape(s)
+    eval %Q{"#{s}"}
+  end
+  
 end
 
 class ComparisonNode < SuperNode
@@ -339,7 +349,7 @@ class FunctionDeclarationNode < SuperNode
   end
 
   def evaluate(scope)
-    scope.set_func(@name, FunctionNode.new(@parameters, @statements))
+    @@global_scope.set_func(@name, FunctionNode.new(@parameters, @statements))
     nil
   end
 end
@@ -350,7 +360,7 @@ class FunctionExecutionNode < SuperNode
   end
 
   def evaluate(scope)
-    scope.get_func(@name).evaluate(scope, @parameters.evaluate(scope))
+    @@global_scope.get_func(@name).evaluate(scope, @parameters.evaluate_all(scope))
   end
 end
 
@@ -361,11 +371,10 @@ class FunctionNode < SuperNode
 
   def evaluate(parent_scope, param_values=[])
     raise "Parameter mismatch! Expected #{@param_names.length}, found #{param_values.length}" unless @param_names.length == param_values.length
-    scope = Scope.new(parent_scope)
+    scope = Scope.new#(parent_scope)
     @param_names.each_index do |i| 
       AssignmentNode.new(@param_names[i], param_values[i]).evaluate(scope)
     end
-    puts "#{self}: #{parent_scope.inspect} | #{scope.inspect}"
     @statements.each do |s| 
       if s.class == ReturnValue
         return s.evaluate(scope).value
@@ -383,7 +392,7 @@ class ReturnValue
   def initialize(value)
     @value = value
   end
-  
+
   def evaluate(scope)
     @value = @value.evaluate_all(scope)
     self
