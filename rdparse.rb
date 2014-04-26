@@ -191,6 +191,7 @@ class Parser
 
   # Return the next token in the queue
   def expect(tok)
+    return tok if tok == :empty
     t = next_token
     if @pos - 1 > @max_pos
       @max_pos = @pos - 1
