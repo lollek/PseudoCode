@@ -17,7 +17,7 @@ class PseudoCode
       token(/ /)          # Throw away spaces
 
       start :program do 
-        match(:top_level_statements) { |statements| ProgramNode.new(statements, scope).evaluate }
+        match(:top_level_statements) { |statements| ProgramNode.new(statements, scope) }
       end
 
       rule :top_level_statements do
@@ -297,7 +297,7 @@ if __FILE__ == $0
   else
     parse_data = 
       begin
-        filename = File.read(ARGV[0])
+        File.read(ARGV[0])
       rescue SystemCallError => e
         $stderr.puts e
         exit 1
