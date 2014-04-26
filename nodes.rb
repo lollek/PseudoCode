@@ -213,38 +213,33 @@ class ExpressionNode < SuperNode
 end
 
 class BoolNode < SuperNode
-  def initialize(value)
-    @value = value
+  def initialize(lh, op=nil, rh=nil, middle=nil)
+    @lh, @op, @rh, @middle = lh, op, rh, middle
   end
   def evaluate(scope)
-    @value.evaluate(scope)
+    lh = @lh.evaluate(scope)
+    rh = @rh.evaluate(scope) unless @rh.nil?
+    middle = @middle.evaluate(scope) unless @middle.nil?
+    case @op
+    when nil then lh
+    when "not" then not lh
+    when "and" then lh && rh
+    when "or" then lh || rh
+    when '<' then lh < rh
+    when '>' then lh > rh
+    when '<=' then lh <= rh
+    when '>=' then lh >= rh
+    when 'between' then middle.between?([lh,rh].min, [lh, rh].max)
+    when '==' then lh == rh
+    end
   end
-end
-
-class BoolOrNode < SuperNode
-  def initialize(lh, rh)
-    @lh, @rh = lh, rh
-  end
-  def evaluate(scope)
-    @lh.evaluate(scope) || @rh.evaluate(scope)
-  end
-end
-
-class BoolAndNode < SuperNode
-  def initialize(lh, rh)
-    @lh, @rh = lh, rh
-  end
-  def evaluate(scope)
-    @lh.evaluate(scope) && @rh.evaluate(scope)
-  end
-end
-
-class BoolNotNode < SuperNode
-  def initialize(value)
-    @value = value
-  end
-  def evaluate(scope)
-    @value.evaluate(scope) == false
+  def set_lh(value)
+    if @op == 'between'
+      @middle = value
+    else
+      @lh = value
+    end
+    self
   end
 end
 
@@ -266,34 +261,6 @@ class WriteNode < SuperNode
     eval %Q{"#{s}"}
   end
   
-end
-
-class ComparisonNode < SuperNode
-  def initialize(lh, op, rh, middle=nil)
-    @lh, @op, @rh, @middle = lh, op, rh, middle
-  end
-  def evaluate(scope)
-    lh = @lh.evaluate(scope)
-    rh = @rh.evaluate(scope)
-    middle = @middle.evaluate(scope) unless @middle.nil?
-    case @op
-    when '<' then lh < rh
-    when '>' then lh > rh
-    when '<=' then lh <= rh
-    when '>=' then lh >= rh
-    when 'between' then middle.between?([lh,rh].min, [lh, rh].max)
-    when '==' then lh == rh
-    end
-  end
-
-  def set_lh(value)
-    if @op == 'between'
-      @middle = value
-    else
-      @lh = value
-    end
-    self
-  end
 end
 
 class AritmNode < SuperNode
@@ -327,8 +294,9 @@ class ArrayNode < SuperNode
     @values.map { |z| z.evaluate_all(scope) }
   end
 
-  def +(array)
-    ArrayNode.new(@values + array.values)
+  def <<(array)
+    @values << array
+    self
   end
 
   def each
