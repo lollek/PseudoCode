@@ -255,13 +255,20 @@ class PseudoCode
   end
 
   def parse(str)
-    @parser.parse(str)
+    if $DEBUG_MODE
+      @parser.parse(str)
+    else
+      begin
+        @parser.parse(str)
+      rescue => e
+        $stderr.puts "#{e.class}: #{e}"
+      end
+    end
   end
 
   def prompt
     require 'readline'
-    pc = PseudoCode.new()
-    pc.log(false)
+    log(false)
     while input = Readline.readline(">> ", true)
       break if input == "exit"
       parse(input)
