@@ -55,7 +55,7 @@ class Scope
       @variables[name] = value
     end
   end
-  
+
   def get_var(name)
     if @variables.include?(name) 
       @variables[name]
@@ -83,13 +83,13 @@ end
 
 class AssignmentNode < SuperNode
   def initialize(name, value, op=nil)
-    @name, @value, @op = name, value, op       
+    @name, @value, @op = name, value, op
   end
 
   def evaluate(scope)
     value = @value.evaluate_all(scope)
     case @op
-    when nil then scope.set_var(@name, value) # =
+    when nil then scope.set_var(@name, value)
     when '+=' then scope.set_var(@name, scope.get_var(@name) + value)
     when '-=' then scope.set_var(@name, scope.get_var(@name) - value)
     when '*=' then scope.set_var(@name, scope.get_var(@name) * value)
@@ -120,16 +120,14 @@ class ConditionNode < SuperNode
     scope = Scope.new(parent_scope)
     if @expression.evaluate(scope)
       @statements.each do |s| 
-        if s.class == ReturnValue
-          return s.evaluate(scope)
-        else
-          return_value = s.evaluate(scope)
-          return return_value if return_value.class == ReturnValue
+        if (s = s.evaluate(scope)).class == ReturnValue
+          return s
         end
       end
     elsif @elseif != nil
-      return_value = @elseif.evaluate(scope)
-      return return_value if return_value.class == ReturnValue
+      if (s = @elseif.evaluate(scope)).class == ReturnValue
+        return s
+      end
     end
     nil
   end
@@ -144,11 +142,8 @@ class WhileNode < SuperNode
     scope = Scope.new(parent_scope)
     while @expression.evaluate(scope)
       @statements.each do |s| 
-        if s.class == ReturnValue
-          return s.evaluate(scope)
-        else
-          return_value = s.evaluate(scope)
-          return return_value if return_value.class == ReturnValue
+        if (s = s.evaluate(scope)).class == ReturnValue
+          return s
         end
       end
     end
@@ -171,11 +166,8 @@ class ForEachNode < SuperNode
     end.each do |elem|
       AssignmentNode.new(@var, elem).evaluate(scope)
       @statements.each do |s|
-        if s.class == ReturnValue
-          return s.evaluate(scope)
-        else
-          return_value = s.evaluate(scope)
-          return return_value if return_value.class == ReturnValue
+        if (s = s.evaluate(scope)).class == ReturnValue
+          return s
         end
       end
     end
@@ -187,7 +179,7 @@ class FromNode < SuperNode
   def initialize(start, stop)
     @start, @stop = start, stop
   end
-  
+
   def evaluate(scope)
     if (stop = @stop.evaluate(scope)) > (start = @start.evaluate(scope))
       ArrayNode.new((start..stop).to_a)
@@ -203,8 +195,7 @@ class LookupNode < SuperNode
   end
 
   def evaluate(scope)
-    results = scope.get_var(@name)
-    if results.nil?
+    if (results = scope.get_var(@name)).nil?
       p scope if $DEBUG_MODE
       raise PseudoCodeError, "Variable '#{@name}' does not exist!"
     end
@@ -235,7 +226,7 @@ class BoolOrNode < SuperNode
     @lh, @rh = lh, rh
   end
   def evaluate(scope)
-    @lh.evaluate(scope) or @rh.evaluate(scope)
+    @lh.evaluate(scope) || @rh.evaluate(scope)
   end
 end
 
@@ -244,7 +235,7 @@ class BoolAndNode < SuperNode
     @lh, @rh = lh, rh
   end
   def evaluate(scope)
-    @lh.evaluate(scope) and @rh.evaluate(scope)
+    @lh.evaluate(scope) && @rh.evaluate(scope)
   end
 end
 
