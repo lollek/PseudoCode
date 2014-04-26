@@ -17,21 +17,21 @@ class PseudoCode
       token(/ /)          # Throw away spaces
 
       start :program do 
-        match(:top_level_statements) { |statements| ProgramNode.new(statements, scope) }
+        match(:top_level_statements) { |m| ProgramNode.new(m, scope) }
       end
 
       rule :top_level_statements do
-        match(:top_level_statements, :func_decl)  { |m, n| m.flatten + [n].flatten }
-        match(:top_level_statements, :statements) { |m, n| m.flatten + [n].flatten }
-        match(:func_decl) { |m| [m].flatten }
-        match(:statements) { |m| [m].flatten }
+        match(:top_level_statements, :func_decl) { |m, n| m << n }
+        match(:top_level_statements, :statements) { |m, n| m + n }
+        match(:func_decl) { |m| [m] }
+        match(:statements) { |m| m }
       end
 
       rule :statements do
-        match(:newline, :statements) { |_, a| a.flatten }
-        match(:statements, :newline, :statement) { |a, _, b| a.flatten + [b].flatten }
-        match(:statements, :newline) { |a, _| [a].flatten }
-        match(:statement) { |m| [m].flatten }
+        match(:newline, :statements) { |_, a| a }
+        match(:statements, :newline, :statement) { |a, _, b| a << b }
+        match(:statements, :newline) { |a, _| a }
+        match(:statement) { |m| [m] }
       end
 
       rule :statement do
@@ -45,17 +45,17 @@ class PseudoCode
         match(:newline)
       end
 
-     rule :assignment do
-        match(:variable_set, 'equals', :expression) do |name, _, value| 
+      rule :assignment do
+        match(:variable_set, 'equals', :expression) do |name, _, value|
           AssignmentNode.new(name, value); end
-        match('increase', :variable_set, 'by', :expression) do |_, name, _, value|
-          AssignmentNode.new(name, value, '+='); end # +=
-        match('decrease', :variable_set, 'by', :expression) do |_, name, _, value|
-          AssignmentNode.new(name, value, '-='); end # -=
-        match('multiply', :variable_set, 'by', :expression) do |_, name, _, value|
-          AssignmentNode.new(name, value, '*='); end # *=
+        match('increase', :variable_set, 'by', :expression) do
+          |_, name, _, value| AssignmentNode.new(name, value, '+='); end
+        match('decrease', :variable_set, 'by', :expression) do
+          |_, name, _, value| AssignmentNode.new(name, value, '-='); end
+        match('multiply', :variable_set, 'by', :expression) do
+          |_, name, _, value| AssignmentNode.new(name, value, '*='); end
         match('divide', :variable_set, 'by', :expression) do |_, name, _, value|
-          AssignmentNode.new(name, value, '/='); end # /=
+          AssignmentNode.new(name, value, '/='); end
       end
 
       rule :output do
@@ -63,17 +63,22 @@ class PseudoCode
       end
 
       rule :write_list do
-        match(:write_list, ',', :expression) { |a, _, b| a.flatten + [b] }
+        match(:write_list, ',', :expression) { |a, _, b| a << b }
         match(:expression) { |m| [m] }
       end
 
       rule :input do
-        match('read', 'to', :variable_set) { |_, _, var_name| InputNode.new(var_name) }
+        match('read', 'to', :variable_set) do |_, _, var_name|
+          InputNode.new(var_name)
+        end
       end
 
       rule :condition do
-        match('if', :bool_expr, 'then', :newline, :indent, :statements, :condition_tail) do 
-          |_, if_expr, _, _, _, if_stmts, elseif| ConditionNode.new(if_expr, if_stmts, elseif); end
+        match('if', :bool_expr, 'then', :newline,
+              :indent, :statements, :condition_tail) do
+          |_, if_expr, _, _, _, if_stmts, elseif|
+          ConditionNode.new(if_expr, if_stmts, elseif)
+        end
       end
 
       rule :condition_tail do
@@ -83,8 +88,11 @@ class PseudoCode
       end
 
       rule :condition_elseif do
-        match('else', 'if', :bool_expr, 'then', :newline, :indent, :statements, :condition_elseif_tail) do
-          |_, _, if_expr, _, _, _, if_stmts, elseif| ConditionNode.new(if_expr, if_stmts, elseif); end
+        match('else', 'if', :bool_expr, 'then', :newline,
+              :indent, :statements, :condition_elseif_tail) do
+          |_, _, if_expr, _, _, _, if_stmts, elseif| 
+          ConditionNode.new(if_expr, if_stmts, elseif)
+        end
       end
 
       rule :condition_elseif_tail do
@@ -95,7 +103,8 @@ class PseudoCode
 
       rule :condition_else do
         match('else', :newline, :indent, :statements, :dedent) do
-          |_, _, _, stmts, _| ConditionNode.new(true, stmts); end
+          |_, _, _, stmts, _| ConditionNode.new(true, stmts)
+        end
       end
 
       rule :loop do
@@ -104,25 +113,34 @@ class PseudoCode
       end
 
       rule :foreach do
-        match('for', 'each', :identifier, 'in', :expression, 'do',
-              :newline, :indent, :statements, :dedent) do |_, _, var, _, iterator, _, _, _, stmts, _| 
-          ForEachNode.new(var, iterator, stmts); end
-        match('for', 'each', :identifier, :from, 'do', :newline, 
-              :indent, :statements, :dedent) do |_, _, var, iterator, _, _, _, stmts, _| 
-          ForEachNode.new(var, iterator, stmts); end
+        match('for', 'each', :identifier, 'in', :expression, 'do', :newline,
+              :indent, :statements, :dedent) do
+          |_, _, var, _, iterator, _, _, _, stmts, _|
+          ForEachNode.new(var, iterator, stmts)
+        end
+        match('for', 'each', :identifier, :from, 'do', :newline,
+              :indent, :statements, :dedent) do 
+          |_, _, var, iterator, _, _, _, stmts, _|
+          ForEachNode.new(var, iterator, stmts)
+        end
       end
 
       rule :while do
-        match('while', :bool_expr, 'do', :newline, 
+        match('while', :bool_expr, 'do', :newline,
               :indent, :statements, :dedent) do |_, expr, _, _ , _, stmts, _|
-          WhileNode.new(expr, stmts); end
+          WhileNode.new(expr, stmts)
+        end
       end
 
       rule :from do
-        match('from', :variable_get, 'to', :variable_get) { |_, start, _, stop| FromNode.new(start, stop) }
-        match('from', :variable_get, 'to', :integer) { |_, start, _, stop| FromNode.new(start, stop) }
-        match('from', :integer, 'to', :variable_get) { |_, start, _, stop| FromNode.new(start, stop) }
-        match('from', :integer, 'to', :integer) { |_, start, _, stop| FromNode.new(start, stop) }
+        match('from', :variable_get, 'to', :variable_get) do |_, start, _, stop|
+          FromNode.new(start, stop); end
+        match('from', :variable_get, 'to', :integer) do |_, start, _, stop|
+          FromNode.new(start, stop); end
+        match('from', :integer, 'to', :variable_get) do |_, start, _, stop|
+          FromNode.new(start, stop); end
+        match('from', :integer, 'to', :integer) do |_, start, _, stop|
+          FromNode.new(start, stop); end
       end
 
       rule :expression do
@@ -135,7 +153,8 @@ class PseudoCode
       end
 
       rule :expression_list do
-        match(:expression_list, ',', :expression) { |a, _, b| a + ArrayNode.new([b]) }
+        match(:expression_list, ',', :expression) do |a, _, b|
+          a + ArrayNode.new([b]); end
         match(:expression) { |m| ArrayNode.new([m]) }
       end
 
@@ -152,16 +171,21 @@ class PseudoCode
       end
 
       rule :comparison do
-        match(:aritm_expr, 'is', :comparison_tail) { |e, _, comp_node| comp_node.set_lh(e) }
+        match(:aritm_expr, 'is', :comparison_tail) do |e, _, comp_node|
+          comp_node.set_lh(e); end
         match(:aritm_expr) { |m| m }
       end
 
       rule :comparison_tail do
-        match('less', 'than', :aritm_expr) { |_, _, e| ComparisonNode.new(nil, '<', e) }
-        match('greater', 'than', :aritm_expr) { |_, _, e| ComparisonNode.new(nil, '>', e) }
-        match(:aritm_expr, 'or', 'more') { |e, _, _| ComparisonNode.new(nil, '>=', e) }
-        match(:aritm_expr, 'or', 'less') { |e, _, _| ComparisonNode.new(nil, '<=', e) }
-        match('between', :aritm_expr, 'and', :aritm_expr) do |_, e, _, f| 
+        match('less', 'than', :aritm_expr) do |_, _, e|
+          ComparisonNode.new(nil, '<', e); end
+        match('greater', 'than', :aritm_expr) do  |_, _, e|
+          ComparisonNode.new(nil, '>', e); end
+        match(:aritm_expr, 'or', 'more') do |e, _, _|
+          ComparisonNode.new(nil, '>=', e); end
+        match(:aritm_expr, 'or', 'less') do |e, _, _|
+          ComparisonNode.new(nil, '<=', e); end
+        match('between', :aritm_expr, 'and', :aritm_expr) do |_, e, _, f|
           ComparisonNode.new(e, 'between', f, nil); end
         match(:aritm_expr) { |e| ComparisonNode.new(nil, '==', e) }
       end
@@ -175,37 +199,37 @@ class PseudoCode
       rule :term do
         match(:factor, 'modulo', :term) { |a, _, b| AritmNode.new(a, '%', b) }
         match(:factor, 'times', :term) { |a, _, b| AritmNode.new(a, '*', b) }
-        match(:factor, 'divided', 'by', :term) { |a, _, _, b| AritmNode.new(a, '/', b) }
+        match(:factor, 'divided', 'by', :term) do |a, _, _, b|
+          AritmNode.new(a, '/', b); end
         match(:factor) { |m| m }
       end
 
       rule :factor do
-        match('(', :expression, ')') do
-          |_, m, _| ExpressionNode.new(m)
-        end
-        match(:number) { |m| m}
+        match('(', :expression, ')') { |_, m, _| ExpressionNode.new(m) }
+        match(:number) { |m| m }
         match(:func_exec) { |m| m }
         match(:variable_get) { |m| m }
       end
 
       rule :func_decl do
-        match(:identifier, 'with', :parameters, 'does', 
-              :newline, :indent, :statements, :dedent) do |name, _, params, _, _, _, stmts, _|
+        match(:identifier, 'with', :parameters, 'does', :newline,
+              :indent, :statements, :dedent) do
+          |name, _, params, _, _, _, stmts, _|
           FunctionDeclarationNode.new(name, stmts, params); end
-        match(:identifier, 'does', :newline, 
+        match(:identifier, 'does', :newline,
               :indent, :statements, :dedent) do |name, _, _, _, stmts, _|
           FunctionDeclarationNode.new(name, stmts); end
       end
 
       rule :func_exec do
-        match('do', :identifier, 'with', :expression_list) do |_, name, _, params| 
+        match('do', :identifier, 'with', :expression_list) do 
+          |_, name, _, params|
           FunctionExecutionNode.new(name, params); end
-        match('do', :identifier) do |_, name| FunctionExecutionNode.new(name)
-        end
+        match('do', :identifier) { |_, name| FunctionExecutionNode.new(name) }
       end
 
       rule :parameters do
-        match(:parameters, ',', :identifier) { |a, _, b| a.flatten + [b] }
+        match(:parameters, ',', :identifier) { |a, _, b| a << b }
         match(:identifier) { |m| [m] }
       end
 
@@ -249,7 +273,7 @@ class PseudoCode
 
       rule :array do
         match('[', :expression_list, ']') { |_, m, _| m }
-        match('[', ']') { ArrayNode.new() }
+        match('[', ']') { ArrayNode.new }
       end
     end
   end
@@ -282,7 +306,7 @@ class PseudoCode
 end
 
 if __FILE__ == $0
-  pc = PseudoCode.new()
+  pc = PseudoCode.new
   pc.log(false)
 
   # If no argument, parse either stdin-data or start a prompt
@@ -293,7 +317,7 @@ if __FILE__ == $0
       pc.parse $stdin.read
     end
 
-  # Otherwise, try to parse file
+    # Otherwise, try to parse file
   else
     parse_data = 
       begin
