@@ -6,7 +6,6 @@ require './nodes.rb'
 
 class PseudoCode
   def initialize(scope=Scope.new)
-    
     @parser = Parser.new("pseudo parser") do
       token(/#.*?$/)      # Comments
       token(/".*?"/)      { |m| m.to_s } # Strings
@@ -71,23 +70,23 @@ class PseudoCode
       rule :input do
         match('read', 'to', :variable_set) { |_, _, var_name| InputNode.new(var_name) }
       end
-      
+
       rule :condition do
         match('if', :bool_expr, 'then', :newline, :indent, :statements, :condition_tail) do 
           |_, if_expr, _, _, _, if_stmts, elseif| ConditionNode.new(if_expr, if_stmts, elseif); end
       end
-      
+
       rule :condition_tail do
         match(:dedent, :newline, :condition_elseif) { |_, _, elseif| elseif }
         match(:dedent, :newline, :condition_else) { |_, _, else_| else_ }
         match(:dedent)
       end
-      
+
       rule :condition_elseif do
         match('else', 'if', :bool_expr, 'then', :newline, :indent, :statements, :condition_elseif_tail) do
           |_, _, if_expr, _, _, _, if_stmts, elseif| ConditionNode.new(if_expr, if_stmts, elseif); end
       end
-      
+
       rule :condition_elseif_tail do
         match(:dedent, :newline, :condition_elseif) { |_, _, elseif| elseif }
         match(:dedent, :newline, :condition_else) { | _, _, else_| else_ }
@@ -103,7 +102,7 @@ class PseudoCode
         match(:foreach) { |m| m }
         match(:while) { |m| m }
       end
-      
+
       rule :foreach do
         match('for', 'each', :identifier, 'in', :expression, 'do',
               :newline, :indent, :statements, :dedent) do |_, _, var, _, iterator, _, _, _, stmts, _| 
@@ -145,18 +144,18 @@ class PseudoCode
         match(:bool_expr, 'or', :simple_bool) { |e, _, f| BoolOrNode.new(e,f) }
         match(:simple_bool) { |m| m }
       end
-      
+
       rule :simple_bool do
         match('not', :bool_expr) { |_, e| BoolNotNode.new(e) }
         match(:bool) { |m| BoolNode.new(m) }
         match(:comparison) { |m| m }
       end
-      
+
       rule :comparison do
         match(:aritm_expr, 'is', :comparison_tail) { |e, _, comp_node| comp_node.set_lh(e) }
         match(:aritm_expr) { |m| m }
       end
-      
+
       rule :comparison_tail do
         match('less', 'than', :aritm_expr) { |_, _, e| ComparisonNode.new(nil, '<', e) }
         match('greater', 'than', :aritm_expr) { |_, _, e| ComparisonNode.new(nil, '>', e) }
@@ -166,7 +165,7 @@ class PseudoCode
           ComparisonNode.new(e, 'between', f, nil); end
         match(:aritm_expr) { |e| ComparisonNode.new(nil, '==', e) }
       end
-      
+
       rule :aritm_expr do
         match(:term, 'plus', :aritm_expr) { |m, _, n| AritmNode.new(m, '+', n) }
         match(:term, 'minus', :aritm_expr) { |m, _, n| AritmNode.new(m, '-', n) }
@@ -197,14 +196,14 @@ class PseudoCode
               :indent, :statements, :dedent) do |name, _, _, _, stmts, _|
           FunctionDeclarationNode.new(name, stmts); end
       end
-      
+
       rule :func_exec do
         match('do', :identifier, 'with', :expression_list) do |_, name, _, params| 
           FunctionExecutionNode.new(name, params); end
         match('do', :identifier) do |_, name| FunctionExecutionNode.new(name)
         end
       end
-      
+
       rule :parameters do
         match(:parameters, ',', :identifier) { |a, _, b| a.flatten + [b] }
         match(:identifier) { |m| [m] }
@@ -222,11 +221,11 @@ class PseudoCode
       rule :integer do
         match(Integer) { |m| m }
       end
-      
+
       rule :float do
         match(Float) { |m| m }
       end
-      
+
       rule :identifier do
         match(/^[a-zA-Z]+$/) { |m| m }
       end
@@ -247,7 +246,7 @@ class PseudoCode
       rule :string do
         match(/".*"/) { |m| m.to_s[1..-2] }
       end
-      
+
       rule :array do
         match('[', :expression_list, ']') { |_, m, _| m }
         match('[', ']') { ArrayNode.new() }
@@ -265,7 +264,7 @@ class PseudoCode
     pc.log(false)
     while input = Readline.readline(">> ", true)
       break if input == "exit"
-      pc.parse(input)
+      parse(input)
       puts
     end
   end
@@ -282,10 +281,24 @@ end
 if __FILE__ == $0
   pc = PseudoCode.new()
   pc.log(false)
+
+  # If no argument, parse either stdin-data or start a prompt
   if ARGV.empty?
-    #raise "Must supply filename!"
-    pc.prompt
+    if $stdin.tty?
+      pc.prompt
+    else
+      pc.parse $stdin.read
+    end
+
+  # Otherwise, try to parse file
   else
-    pc.parse(File.read(ARGV[0]))
+    parse_data = 
+      begin
+        filename = File.read(ARGV[0])
+      rescue SystemCallError => e
+        $stderr.puts e
+        exit 1
+      end
+    pc.parse(parse_data)
   end
 end
