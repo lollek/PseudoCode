@@ -14,7 +14,7 @@ class PseudoCode
       token(/\w+/)        { |m| m }      # Variables, keywords, etc
       token(/\n+/)        # :newline, :indent and :dedent tokens
       token(/[^ ]/)       { |m| m } # Non-space characters
-      token(/./)
+      token(/ /)          # Throw away spaces
 
       start :program do 
         match(:top_level_statements) { |statements| ProgramNode.new(statements, scope).evaluate }
@@ -270,11 +270,7 @@ class PseudoCode
   end
 
   def log(state = true)
-    if state
-      @parser.logger.level = Logger::DEBUG
-    else
-      @parser.logger.level = Logger::WARN
-    end
+    @parser.logger.level = state ? Logger::DEBUG : Logger::WARN
   end
 end
 
