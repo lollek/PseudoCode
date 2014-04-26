@@ -16,15 +16,14 @@ class PseudoCode
       token(/[^ ]/)       { |m| m } # Non-space characters
       token(/ /)          # Throw away spaces
 
-      start :program do 
+      start :program do
         match(:top_level_statements) { |m| ProgramNode.new(m, scope) }
       end
 
       rule :top_level_statements do
         match(:top_level_statements, :func_decl) { |m, n| m << n }
         match(:top_level_statements, :statements) { |m, n| m + n }
-        match(:func_decl) { |m| [m] }
-        match(:statements) { |m| m }
+        match(:empty) { [] }
       end
 
       rule :statements do
@@ -75,36 +74,22 @@ class PseudoCode
 
       rule :condition do
         match('if', :bool_expr, 'then', :newline,
-              :indent, :statements, :condition_tail) do
-          |_, if_expr, _, _, _, if_stmts, elseif|
+              :indent, :statements, :dedent, :condition_elseif) do
+          |_, if_expr, _, _, _, if_stmts, _, elseif|
           ConditionNode.new(if_expr, if_stmts, elseif)
         end
-      end
-
-      rule :condition_tail do
-        match(:dedent, :newline, :condition_elseif) { |_, _, elseif| elseif }
-        match(:dedent, :newline, :condition_else) { |_, _, else_| else_ }
-        match(:dedent)
       end
 
       rule :condition_elseif do
-        match('else', 'if', :bool_expr, 'then', :newline,
-              :indent, :statements, :condition_elseif_tail) do
-          |_, _, if_expr, _, _, _, if_stmts, elseif| 
+        match(:newline, 'else', 'if', :bool_expr, 'then', :newline,
+              :indent, :statements, :dedent, :condition_elseif) do
+          |_, _, _, if_expr, _, _, _, if_stmts, _, elseif| 
           ConditionNode.new(if_expr, if_stmts, elseif)
         end
-      end
-
-      rule :condition_elseif_tail do
-        match(:dedent, :newline, :condition_elseif) { |_, _, elseif| elseif }
-        match(:dedent, :newline, :condition_else) { | _, _, else_| else_ }
-        match(:dedent)
-      end
-
-      rule :condition_else do
-        match('else', :newline, :indent, :statements, :dedent) do
-          |_, _, _, stmts, _| ConditionNode.new(true, stmts)
+        match(:newline, 'else', :newline, :indent, :statements, :dedent) do
+          |_, _, _, _, stmts, _| ConditionNode.new(true, stmts)
         end
+        match(:empty)
       end
 
       rule :loop do
