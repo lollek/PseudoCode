@@ -1,12 +1,3 @@
-#fibonacci with number does
-#  newValue equals 0
-#  oldValue equals 1
-#  for each a from number to 1 do
-#    tmpValue equals newValue
-#    increase newValue by oldValue
-#    oldValue equals tmpValue
-#  return newValue
-
 fibonacci with number does
   write "NUMBER: ", number, "\n"
   if number is 0 or less then
