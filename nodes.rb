@@ -10,6 +10,8 @@ class Object
 end
 
 # Custom Classes
+class PseudoCodeError < RuntimeError; end
+
 class SuperNode
   def initialize_global_variables(scope)
     @@global_scope = scope
@@ -203,8 +205,8 @@ class LookupNode < SuperNode
   def evaluate(scope)
     results = scope.get_var(@name)
     if results.nil?
-      p scope
-      raise "ERROR: Variable '#{@name}' does not exist!"
+      p scope if $DEBUG_MODE
+      raise PseudoCodeError, "Variable '#{@name}' does not exist!"
     end
     results
   end
@@ -370,7 +372,7 @@ class FunctionNode < SuperNode
   end
 
   def evaluate(parent_scope, param_values=[])
-    raise "Parameter mismatch! Expected #{@param_names.length}, found #{param_values.length}" unless @param_names.length == param_values.length
+    raise PseudoCodeError, "Parameter mismatch! Expected #{@param_names.length}, found #{param_values.length}" unless @param_names.length == param_values.length
     scope = Scope.new#(parent_scope)
     @param_names.each_index do |i| 
       AssignmentNode.new(@param_names[i], param_values[i]).evaluate(scope)
