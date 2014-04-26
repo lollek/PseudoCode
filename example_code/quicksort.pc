@@ -1,0 +1,20 @@
+#! /usr/bin/env pseudocode
+
+quicksort with list does
+  if length of list is less than 2 then
+    return list
+
+  pivot equals 1st of list
+  low equals []
+  middle equals [pivot]
+  high equals []
+
+  for each element in list do
+    if element is less than pivot then
+      add element to low
+    else if element is larger than pivot then
+      add element to high
+    else
+      add element to middle
+
+  return (quicksort low) + middle + (quicksort high)

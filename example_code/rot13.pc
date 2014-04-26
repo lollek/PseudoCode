@@ -1,0 +1,11 @@
+#! /usr/bin/env pseudocode
+
+rotateThirteenSteps with string does
+  for each letter in string do
+    if letter is (between "a" and "m") or (between "A" and "M") then
+      increase letter by 13
+    else if letter is (between "n" and "z" or (between "N" and "Z") then
+      decrease letter by 13
+  return string
+
+write "'Hello World' is '", (do rotateThirteenSteps "Hello World"), "' when rotated\n"
