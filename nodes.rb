@@ -90,11 +90,10 @@ class AssignmentNode < SuperNode
     value = @value.evaluate_all(scope)
     case @op
     when nil then scope.set_var(@name, value)
-    when '+=' then scope.set_var(@name, scope.get_var(@name) + value)
-    when '-=' then scope.set_var(@name, scope.get_var(@name) - value)
-    when '*=' then scope.set_var(@name, scope.get_var(@name) * value)
-    when '/=' then scope.set_var(@name, scope.get_var(@name) / value)
-    when 'array' then scope.set_var(@name, value)
+    when :+ then scope.set_var(@name, scope.get_var(@name) + value)
+    when :- then scope.set_var(@name, scope.get_var(@name) - value)
+    when :* then scope.set_var(@name, scope.get_var(@name) * value)
+    when :/ then scope.set_var(@name, scope.get_var(@name) / value)
     end
   end
 end
@@ -203,34 +202,25 @@ class LookupNode < SuperNode
   end
 end
 
-class ExpressionNode < SuperNode
-  def initialize(value)
-    @value = value
-  end
-  def evaluate(scope)
-    @value.evaluate(scope)
-  end
-end
-
 class BoolNode < SuperNode
-  def initialize(lh, op=nil, rh=nil, middle=nil)
+  def initialize(lh, op, rh=nil, middle=nil)
     @lh, @op, @rh, @middle = lh, op, rh, middle
+    puts "Created BoolNode with #{lh}, #{op}, #{rh}, #{middle}"
   end
   def evaluate(scope)
     lh = @lh.evaluate(scope)
-    rh = @rh.evaluate(scope) unless @rh.nil?
-    middle = @middle.evaluate(scope) unless @middle.nil?
+    rh = @rh.evaluate(scope)
+    middle = @middle.evaluate(scope)
     case @op
-    when nil then lh
-    when "not" then not lh
-    when "and" then lh && rh
-    when "or" then lh || rh
-    when '<' then lh < rh
-    when '>' then lh > rh
-    when '<=' then lh <= rh
-    when '>=' then lh >= rh
+    when :not then not lh
+    when :and then lh && rh
+    when :or then lh || rh
+    when :< then lh < rh
+    when :> then lh > rh
+    when :<= then lh <= rh
+    when :>= then lh >= rh
     when 'between' then middle.between?([lh,rh].min, [lh, rh].max)
-    when '==' then lh == rh
+    when :== then lh == rh
     end
   end
   def set_lh(value)
@@ -271,11 +261,11 @@ class AritmNode < SuperNode
     lh = @lh.evaluate(scope)
     rh = @rh.evaluate(scope)
     case @op
-    when '+' then lh + rh
-    when '-' then lh - rh
-    when '%' then lh % rh
-    when '*' then lh * rh
-    when '/' then lh / rh
+    when :+ then lh + rh
+    when :- then lh - rh
+    when :% then lh % rh
+    when :* then lh * rh
+    when :/ then lh / rh
     end
   end
 end
@@ -332,16 +322,13 @@ class FunctionNode < SuperNode
 
   def evaluate(parent_scope, param_values=[])
     raise PseudoCodeError, "Parameter mismatch! Expected #{@param_names.length}, found #{param_values.length}" unless @param_names.length == param_values.length
-    scope = Scope.new#(parent_scope)
+    scope = Scope.new
     @param_names.each_index do |i| 
       AssignmentNode.new(@param_names[i], param_values[i]).evaluate(scope)
     end
     @statements.each do |s| 
-      if s.class == ReturnValue
-        return s.evaluate(scope).value
-      else
-        return_value = s.evaluate(scope)
-        return return_value.value if return_value.class == ReturnValue
+      if (s = s.evaluate(scope)).class == ReturnValue
+        return s.value
       end
     end
     nil
