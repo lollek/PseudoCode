@@ -52,7 +52,7 @@ class Rule
     start = @parser.pos
     matches.each do |match|
       # pre_result is a previously available result from evaluating expressions
-      result = pre_result ? [pre_result] : []
+      result = pre_result.nil? ? [] : [pre_result]
 
       # We iterate through the parts of the pattern, which may be e.g.
       #   [:expr,'*',:term]
