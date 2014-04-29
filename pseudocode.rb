@@ -16,89 +16,75 @@ class PseudoCode
       token(/[^ ]/)       { |m| m } # Non-space characters
       token(/ /)          # Throw away spaces
 
-      start :program do
-        match(:top_level_statements) { |m| ProgramNode.new(m, scope) }
+      start(:program) do
+        match(:top_level_statements) { |a| ProgramNode.new(a, scope) }
       end
 
-      rule :top_level_statements do
-        match(:top_level_statements, :func_decl) { |m, n| m << n }
-        match(:top_level_statements, :statements) { |m, n| m + n }
+      # Statements only allowed in the global scope
+      rule(:top_level_statements) do
+        match(:top_level_statements, :func_decl) { |a, b| a << b }
+        match(:top_level_statements, :statements) { |a, b| a + b }
         match(:empty) { [] }
       end
 
-      rule :statements do
+      # Statements allowed in any scope
+      rule(:statements) do
         match(:newline, :statements) { |_, a| a }
         match(:statements, :newline, :statement) { |a, _, b| a << b }
         match(:statements, :newline) { |a, _| a }
-        match(:statement) { |m| [m] }
+        match(:statement) { |a| [a] }
       end
 
-      rule :statement do
-        match('write', :expression_list) { |_, m| WriteNode.new(m) }
-        match('read', 'to', :identifier) { |_, _, var| InputNode.new(var_name) }
+      rule(:statement) do
+        match('write', :expression_list) { |_, a| WriteNode.new(a) }
+        match('read', 'to', :identifier) { |_, _, a| InputNode.new(a) }
         match(:if)
         match(:while)
-        match(:for_each)
-        match('return', :expression) { |_, m| ReturnValue.new(m) }
-        match(:assignment) { |a, b, c| AssignmentNode.new(a, b, c) }
+        match(:foreach)
+        match('return', :expression) { |_, a| ReturnValue.new(a) }
+        match(:assignment)
         match(:func_exec)
         match(:newline)
       end
 
-      rule :if do
+      rule(:if) do
         match('if', :bool_expr, 'then', :newline,
-              :indent, :statements, :dedent, :if_else) do
+              :indent, :statements, :dedent, :if_else) {
           |_, if_expr, _, _, _, if_stmts, _, elseif|
-          ConditionNode.new(if_expr, if_stmts, elseif)
-        end
+          ConditionNode.new(if_expr, if_stmts, elseif) }
       end
 
-      rule :if_else do
+      rule(:if_else) do
         match(:newline, 'else', 'if', :bool_expr, 'then', :newline,
-              :indent, :statements, :dedent, :if_else) do
-          |_, _, _, if_expr, _, _, _, if_stmts, _, elseif| 
-          ConditionNode.new(if_expr, if_stmts, elseif)
-        end
-        match(:newline, 'else', :newline, :indent, :statements, :dedent) do
-          |_, _, _, _, stmts, _| ConditionNode.new(true, stmts)
-        end
+              :indent, :statements, :dedent, :if_else) {
+          |_, _, _, if_expr, _, _, _, if_stmts, _, elseif|
+          ConditionNode.new(if_expr, if_stmts, elseif) }
+        match(:newline, 'else', :newline, :indent, :statements, :dedent) {
+          |_, _, _, _, stmts, _| ConditionNode.new(true, stmts) }
         match(:empty)
       end
 
-      rule :while do
+      rule(:while) do
         match('while', :bool_expr, 'do', :newline,
-              :indent, :statements, :dedent) do |_, expr, _, _ , _, stmts, _|
-          WhileNode.new(expr, stmts)
-        end
+              :indent, :statements, :dedent) { |_, expr, _, _ , _, stmts, _|
+          WhileNode.new(expr, stmts) }
       end
 
-      rule :for_each do
+      rule(:foreach) do
         match('for', 'each', :identifier, :foreach_list, 'do', :newline,
-              :indent, :statements, :dedent) do
+              :indent, :statements, :dedent) {
           |_, _, var, iterator, _, _, _, stmts, _|
-          ForEachNode.new(var, iterator, stmts)
-        end
+          ForEachNode.new(var, iterator, stmts) }
       end
 
-      rule :foreach_list do
-        match('in', :expression) { |_, iterator| iterator }
-        match('from', :variable_get, 'to', :variable_get) do |_, start, _, stop|
-          FromNode.new(start, stop); end
-        match('from', :variable_get, 'to', :integer) do |_, start, _, stop|
-          FromNode.new(start, stop); end
-        match('from', :integer, 'to', :variable_get) do |_, start, _, stop|
-          FromNode.new(start, stop); end
-        match('from', :integer, 'to', :integer) do |_, start, _, stop|
-          FromNode.new(start, stop); end
-      end
-
-      rule :assignment do
-        match(:identifier, 'equals', :expression) { |lh, _, rh| [lh, rh] }
+      rule(:assignment) do
+        match(:identifier, 'equals', :expression) { |lh, _, rh|
+          AssignmentNode.new(lh, rh) }
         match(:assign_mod, :identifier, 'by', :expression) { |mod, lh, _, rh|
-          [lh, rh, mod] }
+          AssignmentNode.new(lh, rh, mod) }
       end
 
-      rule :expression do
+      rule(:expression) do
         match(:func_exec)
         match(:bool_expr)
         match(:aritm_expr)
@@ -107,31 +93,26 @@ class PseudoCode
         match(:array)
       end
 
-      rule :expression_list do
-        match(:expression_list, ',', :expression) { |a, _, b| a << b }
-        match(:expression) { |m| ArrayNode.new([m]) }
-      end
-
-      rule :bool_expr do
+      rule(:bool_expr) do
         match(:bool_expr, :and_or, :simple_bool) { |lh, sym, rh|
           BoolNode.new(lh, sym, rh) }
         match(:simple_bool)
       end
 
-      rule :simple_bool do
+      rule(:simple_bool) do
         match('not', :bool_expr) { |sym, e| BoolNode.new(e, sym.to_sym) }
         match('true') { true }
         match('false') { false }
         match(:comparison)
       end
 
-      rule :comparison do
+      rule(:comparison) do
         match(:aritm_expr, 'is', :comparison_tail) { |e, _, comp_node|
           comp_node.set_lh(e) }
         match(:aritm_expr)
       end
 
-      rule :comparison_tail do
+      rule(:comparison_tail) do
         match('less', 'than', :aritm_expr) do |_, _, e|
           BoolNode.new(nil, :<, e); end
         match('greater', 'than', :aritm_expr) do  |_, _, e|
@@ -145,27 +126,28 @@ class PseudoCode
         match(:aritm_expr) { |e| BoolNode.new(nil, :==, e) }
       end
 
-      rule :aritm_expr do
+      rule(:aritm_expr) do
         match(:aritm_expr, :plus_minus, :term) { |lh, mod, rh|
           AritmNode.new(lh, mod, rh) }
         match(:term)
       end
 
-      rule :term do
+      rule(:term) do
         match(:term, :mult_div, :factor) { |lh, mod, rh|
           AritmNode.new(lh, mod, rh) }
         match(:factor)
       end
 
-      rule :factor do
+      rule(:factor) do
         match(:factor, 'modulo', :factor) { |a, _, b| AritmNode.new(a, :%, b) }
         match('(', :expression, ')') { |_, m, _| m }
-        match(:number)
+        match(:float)
+        match(:integer)
         match(:func_exec)
         match(:variable_get)
       end
 
-      rule :func_decl do
+      rule(:func_decl) do
         match(:identifier, 'with', :identifier_list, 'does', :newline,
               :indent, :statements, :dedent) do
           |name, _, params, _, _, _, stmts, _|
@@ -175,61 +157,64 @@ class PseudoCode
           FunctionDeclarationNode.new(name, stmts); end
       end
 
-      rule :func_exec do
+      rule(:func_exec) do
         match('do', :identifier, 'with', :expression_list) do 
           |_, name, _, params|
           FunctionExecutionNode.new(name, params); end
         match('do', :identifier) { |_, name| FunctionExecutionNode.new(name) }
       end
 
-      rule :identifier_list do
+      # Lists
+      rule(:identifier_list) do
         match(:identifier_list, ',', :identifier) { |a, _, b| a << b }
         match(:identifier) { |m| [m] }
       end
 
-      rule :and_or do
-        match('and') { :and }
-        match('or')  { :or  }
+      rule(:expression_list) do
+        match(:expression_list, ',', :expression) { |a, _, b| a << b }
+        match(:expression) { |m| ArrayNode.new([m]) }
       end
 
-      rule :mult_div do
-        match('times') { :* }
-        match('divided', 'by') { :/ }
+      rule(:foreach_list) do
+        match('in', :expression) { |_, iterator| iterator }
+        match('from', :foreach_elem, 'to', :foreach_elem) { |_, start, _, stop|
+          FromNode.new(start, stop) }
       end
 
-      rule :plus_minus do
-        match('plus') { :+ }
-        match('minus') { :- }
+      # Collections
+      rule(:foreach_elem) do
+        match(:variable_get)
+        match(:integer)
       end
 
-      rule :assign_mod do
+      rule(:assign_mod) do
         match('increase') { :+ }
         match('decrease') { :- }
         match('multiply') { :* }
         match('divide') { :/ }
       end
 
-      rule :number do
-        match(Float)
-        match(:integer)
+      rule(:and_or) do
+        match('and') { :and }
+        match('or')  { :or  }
       end
 
-      rule :integer do
-        match(Integer)
+      rule(:plus_minus) do
+        match('plus') { :+ }
+        match('minus') { :- }
       end
 
-      rule :identifier do
-        match(/^[a-zA-Z]+$/)
+      rule(:mult_div) do
+        match('times') { :* }
+        match('divided', 'by') { :/ }
       end
 
-      rule :variable_get do
-        match(:identifier) { |m| LookupNode.new(m) }
-      end
-
-      rule :string do
-        match(/".*"/) { |m| m.to_s[1..-2] }
-      end
-
+      # Types
+      rule(:float)        { match(Float) }
+      rule(:integer)      { match(Integer) }
+      rule(:identifier)   { match(/^[a-zA-Z]+$/) }
+      rule(:variable_get) { match(:identifier) { |m| LookupNode.new(m) } }
+      rule(:string)       { match(/^".*"$/) { |m| m.delete('"') } }
       rule :array do
         match('[', :expression_list, ']') { |_, m, _| m }
         match('[', ']') { ArrayNode.new }
