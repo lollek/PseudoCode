@@ -1,6 +1,0 @@
-#! /bin/bash
-case $1 in
-  -v) sed -r 's:def ([a-zA-Z_]+\s*$):def test_\1:' unit_test.rb | ruby ;;
-  *) sed -r 's:def ([a-zA-Z_]+\s*$):def test_\1:' unit_test.rb | ruby | tail -n 100;;
-esac
-tput bel

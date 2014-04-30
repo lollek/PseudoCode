@@ -1,0 +1,19 @@
+#! /usr/bin/env ruby
+
+# Only show the 100 last entries if we run this as 'tests/all -q'
+if __FILE__ == $0 && ARGV[0] == '-q'
+  exec "#{$0} | tail -n 100"
+end
+
+$stderr.puts "Warning: Input is NOT tested"
+
+require './tests/tokens'
+require './tests/bool_expr'
+require './tests/aritm_expr'
+require './tests/stmts'
+require './tests/assignment'
+require './tests/condition'
+require './tests/while'
+require './tests/foreach'
+require './tests/scope'
+require './tests/files'
