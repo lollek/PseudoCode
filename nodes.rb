@@ -117,14 +117,14 @@ class ConditionNode < SuperNode
 
   def evaluate(parent_scope)
     scope = Scope.new(parent_scope)
-    if @expression.evaluate(scope)
+    if not [0, false].include? @expression.evaluate(scope)
       @statements.each do |s| 
         if (s = s.evaluate(scope)).class == ReturnValue
           return s
         end
       end
-    elsif @elseif != nil
-      if (s = @elseif.evaluate(scope)).class == ReturnValue
+    elsif not [0, false].include? @elseif != nil
+      if (s = @elseif.evaluate(parent_scope)).class == ReturnValue
         return s
       end
     end
@@ -205,7 +205,6 @@ end
 class BoolNode < SuperNode
   def initialize(lh, op, rh=nil, middle=nil)
     @lh, @op, @rh, @middle = lh, op, rh, middle
-    puts "Created BoolNode with #{lh}, #{op}, #{rh}, #{middle}"
   end
   def evaluate(scope)
     lh = @lh.evaluate(scope)
@@ -219,12 +218,12 @@ class BoolNode < SuperNode
     when :> then lh > rh
     when :<= then lh <= rh
     when :>= then lh >= rh
-    when 'between' then middle.between?([lh,rh].min, [lh, rh].max)
+    when :between then middle.between?([lh,rh].min, [lh, rh].max)
     when :== then lh == rh
     end
   end
   def set_lh(value)
-    if @op == 'between'
+    if @op == :between
       @middle = value
     else
       @lh = value

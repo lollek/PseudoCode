@@ -26,4 +26,8 @@ class TestClass < PCTest
     assert_output("if false then\n  write 0\nelse if false then\n  write 0\nelse\n  write 1\n", "1")
   end
 
+  def test_number_as_bool
+    assert_file("test_number_bool.pc", "1 is trueNOPE!42")
+  end
+
 end

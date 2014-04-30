@@ -179,7 +179,11 @@ class Parser
     result = @start.parse
     # If there are unparsed extra tokens, signal error
     if @pos != @tokens.size
-      raise ParseError, "Parse error. expected: '#{@expected.join(', ')}', found '#{@tokens[@max_pos]}'"
+      @tokens = @tokens[0..@max_pos]
+      @tokens.delete(:indent)
+      @tokens.delete(:newline)
+      i = (i = @tokens.reverse.index(:newline)).nil? ? 0 : -i
+      raise ParseError, "Unexpected '#{@tokens.last}' in '#{@tokens[i..-1].join(' ')}'"
     end
     return result
   end

@@ -38,7 +38,7 @@ class PseudoCode
       rule(:statement) do
         match('write', :expression_list) { |_, a| WriteNode.new(a) }
         match('read', 'to', :identifier) { |_, _, a| InputNode.new(a) }
-        match(:if)
+        match(:condition)
         match(:while)
         match(:foreach)
         match('return', :expression) { |_, a| ReturnValue.new(a) }
@@ -47,16 +47,16 @@ class PseudoCode
         match(:newline)
       end
 
-      rule(:if) do
+      rule(:condition) do
         match('if', :bool_expr, 'then', :newline,
-              :indent, :statements, :dedent, :if_else) {
+              :indent, :statements, :dedent, :condition_else) {
           |_, if_expr, _, _, _, if_stmts, _, elseif|
           ConditionNode.new(if_expr, if_stmts, elseif) }
       end
 
-      rule(:if_else) do
+      rule(:condition_else) do
         match(:newline, 'else', 'if', :bool_expr, 'then', :newline,
-              :indent, :statements, :dedent, :if_else) {
+              :indent, :statements, :dedent, :condition_else) {
           |_, _, _, if_expr, _, _, _, if_stmts, _, elseif|
           ConditionNode.new(if_expr, if_stmts, elseif) }
         match(:newline, 'else', :newline, :indent, :statements, :dedent) {
@@ -122,7 +122,7 @@ class PseudoCode
         match(:aritm_expr, 'or', 'less') do |e, _, _|
           BoolNode.new(nil, :<=, e); end
         match('between', :aritm_expr, 'and', :aritm_expr) do |_, e, _, f|
-          BoolNode.new(e, 'between', f, nil); end
+          BoolNode.new(e, :between, f, nil); end
         match(:aritm_expr) { |e| BoolNode.new(nil, :==, e) }
       end
 
@@ -223,11 +223,14 @@ class PseudoCode
   end
 
   def parse(str)
+    str = str + "\n"
     if $DEBUG_MODE
       @parser.parse(str)
     else
       begin
         @parser.parse(str)
+      rescue Parser::ParseError => e
+        $stderr.puts "SyntaxError: #{e}"
       rescue => e
         $stderr.puts "#{e.class}: #{e}"
       end
@@ -237,10 +240,15 @@ class PseudoCode
   def prompt
     require 'readline'
     log(false)
-    while input = Readline.readline(">> ", true)
-      break if input == "exit"
-      parse(input)
+    begin
+      while input = Readline.readline(">> ", true)
+        break if input == "exit"
+        parse(input)
+        puts
+      end
+    rescue Interrupt
       puts
+      exit
     end
   end
 
