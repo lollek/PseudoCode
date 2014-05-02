@@ -181,8 +181,9 @@ class Parser
     if @pos != @tokens.size
       @tokens = @tokens[0..@max_pos]
       @tokens.delete(:indent)
-      @tokens.delete(:newline)
       i = (i = @tokens.reverse.index(:newline)).nil? ? 0 : -i
+      @tokens.shift if @tokens.first == :newline
+      @tokens.pop if @tokens.last == :newline      
       raise ParseError, "Unexpected '#{@tokens.last}' in '#{@tokens[i..-1].join(' ')}'"
     end
     return result
