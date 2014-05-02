@@ -246,15 +246,10 @@ class WriteNode < SuperNode
     if $DEBUG_MODE
       File.open("f", "a") { |f| @value.each { |a| f.print(a.evaluate_all(scope)) } }
     else
-      @value.each { |a| print(unescape(a.evaluate_all(scope))) }
+      @value.each { |a| print(a.evaluate_all(scope)) }
     end
     nil
   end
-
-  def unescape(s)
-    eval %Q{"#{s}"}
-  end
-  
 end
 
 class AritmNode < SuperNode
@@ -265,13 +260,47 @@ class AritmNode < SuperNode
     lh = @lh.evaluate(scope)
     rh = @rh.evaluate(scope)
     case @op
-    when :+ then lh + rh
-    when :- then lh - rh
-    when :% then lh % rh
+    when :+ 
+      if lh.class == Array
+        if rh.class != Array then return lh << rh
+        else return lh + rh
+        end
+      elsif lh.class == String
+        if rh.class != Array
+          if rh.class == Fixnum then return lh << rh
+          else return lh + rh
+          end
+        else raise PseudoCodeError, "Cannot calculate '#{lh} plus #{rh}'"
+        end
+      elsif [Fixnum, Float].include?(lh.class) and [Fixnum, Float].include?(rh.class) then return lh + rh
+      else raise PseudoCodeError, "Cannot calculate '#{lh} plus #{rh}'"
+      end
+    when :- then
+      if lh.class == Array then return minus(Array, Fixnum)
+      elsif lh.class == String then return minus(String, Fixnum)
+      else raise PseudoCodeError, "Cannot calculate '#{lh} minus #{rh}'"
+      end
+    when :% then
+      if [Fixnum, Float].include?(lh.class) and [Fixnum, Float].include?(rh.class) then return lh % rh
+      else raise PseudoCodeError, "Cannot calculate '#{lh} modulo #{rh}'"
+      end
     when :* then lh * rh
+      if [Fixnum, Float].include?(rh.class) then return lh % rh
+      else raise PseudoCodeError, "Cannot calculate '#{lh} times #{rh}'"
+      end
     when :/ then lh / rh
+      if [Fixnum, Float].include?(lh.class) and [Fixnum, Float].include?(rh.class) then return lh % rh
+      else raise PseudoCodeError, "Cannot calculate '#{lh} divided by #{rh}'"
+      end
     end
   end
+
+  def minus(victim, target)
+    if rh.class == target then return lh[0...-rh]
+    elsif rh.class == victim then return lh - rh
+    end
+  end
+
 end
 
 class ArrayNode < SuperNode
@@ -305,7 +334,15 @@ class IndexNode < SuperNode
 
   def evaluate(scope)
     object = @object.evaluate(scope)
-    index = @index.class == String ? @index.to_i : @index.evaluate(scope) 
+    raise PseudoCodeError, "Cannot use index on empty object" if object.empty?
+    index = 
+      if @index == 'last' and object.methods.include?(:length)
+        object.length 
+      elsif @index.class == String
+        @index.to_i
+      else 
+        @index.evaluate(scope) 
+      end
     raise PseudoCodeError, "Cannot use '#{index}' as index" if not index.class == Fixnum
 
     if object.methods.include?(:[])
@@ -315,7 +352,7 @@ class IndexNode < SuperNode
         raise PseudoCodeError, "Index '#{index}' out of range"
       end
     end
-    raise PseudoCodeError, "Cannot index '#{object}'"
+    raise PseudoCodeError, "Cannot use index on '#{object}'"
   end
 end
 

@@ -8,7 +8,7 @@ class PseudoCode
   def initialize(scope=Scope.new)
     @parser = Parser.new("pseudo parser") do
       token(/#.*?$/)             # Comments
-      token(/".*?"/)             { |m| m.to_s } # Strings
+      token(/".*?"/)             { |m| m.to_s.gsub('\n',"\n").gsub('\t',"\t").gsub('\r',"\r") } # Strings
       token(/(-?\d+)*[a-zA-Z]+/) { |m| m }      # Variables, keywords, etc
       token(/-?\d+\.\d+/)        { |m| m.to_f } # Floats
       token(/-?\d+/)             { |m| m.to_i } # Integers
@@ -48,14 +48,14 @@ class PseudoCode
       end
 
       rule(:condition) do
-        match('if', :bool_expr, 'then', :newline,
+        match('if', :expression, 'then', :newline,
               :indent, :statements, :dedent, :condition_else) {
           |_, if_expr, _, _, _, if_stmts, _, elseif|
           ConditionNode.new(if_expr, if_stmts, elseif) }
       end
 
       rule(:condition_else) do
-        match(:newline, 'else', 'if', :bool_expr, 'then', :newline,
+        match(:newline, 'else', 'if', :expression, 'then', :newline,
               :indent, :statements, :dedent, :condition_else) {
           |_, _, _, if_expr, _, _, _, if_stmts, _, elseif|
           ConditionNode.new(if_expr, if_stmts, elseif) }
@@ -65,7 +65,7 @@ class PseudoCode
       end
 
       rule(:while) do
-        match('while', :bool_expr, 'do', :newline,
+        match('while', :expression, 'do', :newline,
               :indent, :statements, :dedent) { |_, expr, _, _ , _, stmts, _|
           WhileNode.new(expr, stmts) }
       end
@@ -85,25 +85,10 @@ class PseudoCode
       end
 
       rule(:expression) do
-        match(:index, 'of', :indexable) { |index, _, list| IndexNode.new(list, index) }
-        match(:func_exec)
-        match(:bool_expr)
-        match(:aritm_expr)
-        match(:variable_get)
-        match(:string)
-        match(:array)
-      end
-
-      rule(:bool_expr) do
-        match(:bool_expr, :and_or, :simple_bool) { |lh, sym, rh|
+        match(:expression, :and_or, :expression) { |lh, sym, rh|
           ComparisonNode.new(lh, sym, rh) }
-        match(:simple_bool)
-      end
-      
-      rule(:simple_bool) do
-        match('not', :bool_expr) { |sym, e| ComparisonNode.new(e, sym.to_sym) }
-        match('true') { true }
-        match('false') { false }
+        match('not', :expression) { |sym, e| ComparisonNode.new(e, sym.to_sym) }
+        match(:bool)
         match(:comparison)
       end
 
@@ -112,7 +97,6 @@ class PseudoCode
           comp_node.set_lh(e) }
         match(:aritm_expr)
       end
-      
       
       rule(:comparison_tail) do
         match('less', 'than', :comparable) do |_, _, e|
@@ -146,7 +130,10 @@ class PseudoCode
         match(:float)
         match(:integer)
         match(:func_exec)
+        match(:index, 'of', :indexable) { |index, _, list| IndexNode.new(list, index) }
         match(:variable_get)
+        match(:string)
+        match(:array)
       end
 
       rule(:func_decl) do
@@ -224,6 +211,7 @@ class PseudoCode
         match(/^\d*3rd$/)
         match(/^\d+th$/)
         match(/^[a-zA-Z]+th$/) { |m| LookupNode.new(m[0...-2]) }
+        match('last')
       end
 
       rule(:indexable) do
@@ -238,9 +226,13 @@ class PseudoCode
       rule(:identifier)   { match(/^[a-zA-Z]+$/) }
       rule(:variable_get) { match(:identifier) { |m| LookupNode.new(m) } }
       rule(:string)       { match(/^".*"$/) { |m| m.delete('"') } }
-      rule :array do
+      rule(:array) do
         match('[', :expression_list, ']') { |_, m, _| m }
         match('[', ']') { ArrayNode.new }
+      end
+      rule(:bool) do
+        match('true') { true }
+        match('false') { false }
       end
     end
   end
