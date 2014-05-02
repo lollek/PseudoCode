@@ -202,7 +202,7 @@ class LookupNode < SuperNode
   end
 end
 
-class BoolNode < SuperNode
+class ComparisonNode < SuperNode
   def initialize(lh, op, rh=nil, middle=nil)
     @lh, @op, @rh, @middle = lh, op, rh, middle
   end
@@ -210,6 +210,12 @@ class BoolNode < SuperNode
     lh = @lh.evaluate(scope)
     rh = @rh.evaluate(scope)
     middle = @middle.evaluate(scope)
+    if @op == :== then
+      return lh == rh
+    elsif lh.class == Array or rh.class == Array
+      raise PseudoCodeError, "Cannot compare #{lh} #{@op} #{rh}"
+    end
+
     case @op
     when :not then not lh
     when :and then lh && rh
@@ -219,7 +225,6 @@ class BoolNode < SuperNode
     when :<= then lh <= rh
     when :>= then lh >= rh
     when :between then middle.between?([lh,rh].min, [lh, rh].max)
-    when :== then lh == rh
     end
   end
   def set_lh(value)
@@ -290,6 +295,27 @@ class ArrayNode < SuperNode
 
   def each
     @values.each { |e| yield(e) }
+  end
+end
+
+class IndexNode < SuperNode
+  def initialize(object, index)
+    @object, @index = object, index
+  end
+
+  def evaluate(scope)
+    object = @object.evaluate(scope)
+    index = @index.class == String ? @index.to_i : @index.evaluate(scope) 
+    raise PseudoCodeError, "Cannot use '#{index}' as index" if not index.class == Fixnum
+
+    if object.methods.include?(:[])
+      if (index > 0) && (not object[index -1].nil?)
+        return object[index -1]
+      else
+        raise PseudoCodeError, "Index '#{index}' out of range"
+      end
+    end
+    raise PseudoCodeError, "Cannot index '#{object}'"
   end
 end
 
