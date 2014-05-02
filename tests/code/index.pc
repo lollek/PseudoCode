@@ -1,0 +1,8 @@
+write 1st of [1,2,3]
+write 2nd of [1,2,3]
+write 3rd of [1,2,3]
+write 4th of [1,2,3,4]
+a equals 3
+write ath of [1,2,3]
+list equals [1,2,3,6]
+write 4th of list

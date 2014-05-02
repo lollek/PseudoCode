@@ -1,0 +1,49 @@
+if 0 then
+  write "0 is true"
+else if 1 then
+  write "1 is true"
+else
+  write "NOPE!"
+if -1 then
+  write "NOPE!"
+
+if 4 then
+  write 42
+
+a equals true
+b equals true
+if b is a then
+  write "IT IS!"
+
+a equals [1,2,3]
+b equals [1,2,3]
+c equals [1,2,3,5]
+d equals [1,2,3,4]
+
+if a is b then
+  write "WORKS"
+
+if not c is d then
+  write "WORKS"
+
+if [1,2] is [1,2] then
+  write "WORKS"
+
+if not [1,2] is [1,3] then
+  write "WORKS"
+
+strA equals "123"
+strB equals "1234"
+strC equals "12345"
+
+if strA is less than strB then
+  write "WORKS"
+
+if strB is between strA and strC then
+  write "WORKS"
+
+if "123" is less than "1234" then
+  write "WORKS"
+
+if "1234" is between "123" and "12345" then
+  write "WORKS"

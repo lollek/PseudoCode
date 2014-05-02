@@ -27,7 +27,7 @@ class TestClass < PCTest
   end
 
   def test_number_as_bool
-    assert_file("test_number_bool.pc", "1 is trueNOPE!42")
+    assert_file("test_number_bool.pc", "1 is trueNOPE!42IT IS!WORKSWORKSWORKSWORKSWORKSWORKSWORKSWORKS")
   end
 
 end
