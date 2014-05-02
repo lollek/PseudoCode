@@ -7,14 +7,14 @@ require './nodes.rb'
 class PseudoCode
   def initialize(scope=Scope.new)
     @parser = Parser.new("pseudo parser") do
-      token(/#.*?$/)      # Comments
-      token(/".*?"/)      { |m| m.to_s } # Strings
-      token(/-?\d+\.\d+/) { |m| m.to_f } # Floats
-      token(/-?\d+/)      { |m| m.to_i } # Integers
-      token(/\w+/)        { |m| m }      # Variables, keywords, etc
-      token(/\n+/)        # :newline, :indent and :dedent tokens
-      token(/[^ ]/)       { |m| m } # Non-space characters
-      token(/ /)          # Throw away spaces
+      token(/#.*?$/)             # Comments
+      token(/".*?"/)             { |m| m.to_s } # Strings
+      token(/(-?\d+)*[a-zA-Z]+/) { |m| m }      # Variables, keywords, etc
+      token(/-?\d+\.\d+/)        { |m| m.to_f } # Floats
+      token(/-?\d+/)             { |m| m.to_i } # Integers
+      token(/\n+/)               # :newline, :indent and :dedent tokens
+      token(/[^ ]/)              { |m| m } # Non-space characters
+      token(/ /)                 # Throw away spaces
 
       start(:program) do
         match(:top_level_statements) { |a| ProgramNode.new(a, scope) }
@@ -85,6 +85,7 @@ class PseudoCode
       end
 
       rule(:expression) do
+        match(:index, 'of', :indexable) { |index, _, list| IndexNode.new(list, index) }
         match(:func_exec)
         match(:bool_expr)
         match(:aritm_expr)
@@ -95,35 +96,36 @@ class PseudoCode
 
       rule(:bool_expr) do
         match(:bool_expr, :and_or, :simple_bool) { |lh, sym, rh|
-          BoolNode.new(lh, sym, rh) }
+          ComparisonNode.new(lh, sym, rh) }
         match(:simple_bool)
       end
-
+      
       rule(:simple_bool) do
-        match('not', :bool_expr) { |sym, e| BoolNode.new(e, sym.to_sym) }
+        match('not', :bool_expr) { |sym, e| ComparisonNode.new(e, sym.to_sym) }
         match('true') { true }
         match('false') { false }
         match(:comparison)
       end
 
       rule(:comparison) do
-        match(:aritm_expr, 'is', :comparison_tail) { |e, _, comp_node|
+        match(:comparable, 'is', :comparison_tail) { |e, _, comp_node|
           comp_node.set_lh(e) }
         match(:aritm_expr)
       end
-
+      
+      
       rule(:comparison_tail) do
-        match('less', 'than', :aritm_expr) do |_, _, e|
-          BoolNode.new(nil, :<, e); end
-        match('greater', 'than', :aritm_expr) do  |_, _, e|
-          BoolNode.new(nil, :>, e); end
-        match(:aritm_expr, 'or', 'more') do |e, _, _|
-          BoolNode.new(nil, :>=, e); end
-        match(:aritm_expr, 'or', 'less') do |e, _, _|
-          BoolNode.new(nil, :<=, e); end
-        match('between', :aritm_expr, 'and', :aritm_expr) do |_, e, _, f|
-          BoolNode.new(e, :between, f, nil); end
-        match(:aritm_expr) { |e| BoolNode.new(nil, :==, e) }
+        match('less', 'than', :comparable) do |_, _, e|
+          ComparisonNode.new(nil, :<, e); end
+        match('greater', 'than', :comparable) do  |_, _, e|
+          ComparisonNode.new(nil, :>, e); end
+        match(:comparable, 'or', 'more') do |e, _, _|
+          ComparisonNode.new(nil, :>=, e); end
+        match(:comparable, 'or', 'less') do |e, _, _|
+          ComparisonNode.new(nil, :<=, e); end
+        match('between', :comparable, 'and', :comparable) do |_, e, _, f|
+          ComparisonNode.new(e, :between, f, nil); end
+        match(:comparable) { |e| ComparisonNode.new(nil, :==, e) }
       end
 
       rule(:aritm_expr) do
@@ -137,7 +139,7 @@ class PseudoCode
           AritmNode.new(lh, mod, rh) }
         match(:factor)
       end
-
+        
       rule(:factor) do
         match(:factor, 'modulo', :factor) { |a, _, b| AritmNode.new(a, :%, b) }
         match('(', :expression, ')') { |_, m, _| m }
@@ -209,6 +211,27 @@ class PseudoCode
         match('divided', 'by') { :/ }
       end
 
+      rule(:comparable) do
+        match(:aritm_expr)
+        match(:string)
+        match(:array)
+      end
+
+      rule(:index) do
+        match(/^\d*(11|12|13)th$/)
+        match(/^\d*1st$/)
+        match(/^\d*2nd$/)
+        match(/^\d*3rd$/)
+        match(/^\d+th$/)
+        match(/^[a-zA-Z]+th$/) { |m| LookupNode.new(m[0...-2]) }
+      end
+
+      rule(:indexable) do
+        match(:string)
+        match(:array)
+        match(:variable_get)
+      end
+        
       # Types
       rule(:float)        { match(Float) }
       rule(:integer)      { match(Integer) }
@@ -254,6 +277,7 @@ class PseudoCode
 
   def log(state = true)
     @parser.logger.level = state ? Logger::DEBUG : Logger::WARN
+    # @parser.logger.level = Logger::DEBUG
   end
 end
 
