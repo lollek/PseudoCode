@@ -29,13 +29,15 @@ class ProgramNode < SuperNode
   end
 
   def evaluate
+    return_value = nil
     @statements.each do |s|
-      if (s = s.evaluate(@@global_scope)).class == ReturnValue
+      if (s = s.evaluate_all(@@global_scope)).class == ReturnValue
         return s.value
       else
-        s
+        return_value = s
       end
     end
+    return_value
   end
 end
 

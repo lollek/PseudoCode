@@ -29,11 +29,15 @@ class PseudoCode
 
       # Statements only allowed in the global scope
       rule(:top_level_statements) do
-        match(:prompt, :expression, :newline) { |_, a, _| [a] }
         match(:top_level_statements, :func_decl) { |a, b| a << b }
         match(:top_level_statements, :statements) { |a, b| a + b }
+        match(:prompt, :prompt_rules) { |_, a| a }
         match(:empty) { [] }
-        #match(:prompt, :newline) { nil }
+      end
+
+      rule(:prompt_rules) do
+        match(:expression, :newline) { |a, _| [a] }
+        match(:statements) { |a| a }
       end
 
       # Statements allowed in any scope
@@ -267,7 +271,8 @@ class PseudoCode
     begin
       while input = Readline.readline(">> ", true)
         break if input == "exit"
-        puts parse(input, true)
+        return_value = parse(input, true)
+        p return_value unless return_value.nil?
       end
     rescue Interrupt
       puts
