@@ -90,10 +90,10 @@ class AssignmentNode < SuperNode
     value = @value.evaluate_all(scope)
     case @op
     when nil then scope.set_var(@name, value)
-    when :+ then scope.set_var(@name, scope.get_var(@name) + value)
-    when :- then scope.set_var(@name, scope.get_var(@name) - value)
-    when :* then scope.set_var(@name, scope.get_var(@name) * value)
-    when :/ then scope.set_var(@name, scope.get_var(@name) / value)
+    when :+ then scope.set_var(@name, AritmNode.new(scope.get_var(@name), :+, value).evaluate(scope))
+    when :- then scope.set_var(@name, AritmNode.new(scope.get_var(@name), :-, value).evaluate(scope))
+    when :* then scope.set_var(@name, AritmNode.new(scope.get_var(@name), :*, value).evaluate(scope))
+    when :/ then scope.set_var(@name, AritmNode.new(scope.get_var(@name), :/, value).evaluate(scope))
     end
   end
 end
@@ -244,11 +244,20 @@ class WriteNode < SuperNode
 
   def evaluate(scope)
     if $DEBUG_MODE
-      File.open("f", "a") { |f| @value.each { |a| f.print(a.evaluate_all(scope)) } }
+      File.open("f", "a") { |f| @value.each { |a| f.print(prepare(a, scope)) } }
     else
-      @value.each { |a| print(a.evaluate_all(scope)) }
+      @value.each { |a| print(prepare(a, scope)) }
     end
     nil
+  end
+
+  def prepare(data, scope)
+    data = data.evaluate_all(scope)
+    if data.class == String
+      data.gsub('\n',"\n").gsub('\t',"\t").gsub('\r',"\r")
+    else
+      data
+    end
   end
 end
 
@@ -257,20 +266,11 @@ class AritmNode < SuperNode
     @lh, @op, @rh = lh, op, rh
   end
   def evaluate(scope)
-    lh = @lh.evaluate(scope)
-    rh = @rh.evaluate(scope)
+    lh = @lh.evaluate_all(scope)
+    rh = @rh.evaluate_all(scope)
     begin
       case @op
-      when :+
-        if lh.class == Array
-          if rh.class == Array
-            lh + rh
-          else
-            lh << rh
-          end
-        else
-          lh + rh
-        end
+      when :+ then lh.class == Array ? lh << rh : lh + rh
       when :- then [Array, String].include?(lh.class) ? lh[0...-rh] : lh - rh
       when :% then lh % rh
       when :* then lh * rh

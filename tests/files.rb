@@ -12,13 +12,13 @@ class TestClass < PCTest
   end
 
   def test_return
-    #assert_file("returns.pc", "")
-    #assert_file("returns2.pc", "number is 1number is 2hejbla11bla11returnIfOnereturnifTworeturnifThreereturnif")
+    assert_file("returns.pc", "")
+    assert_file("returns2.pc", "number is 1number is 2hejbla11bla11returnIfOnereturnifTworeturnifThreereturnif")
   end
 
   def test_longer_functions
-    #assert_file("fibonacci_iter.pc", "55 equals 55!\\n")
-#    assert_file("realfun.pc", "55")
+    assert_file("fibonacci_iter.pc", "55 equals 55!\n")
+    assert_file("realfun.pc", "55")
     assert_output("write \"hej\", \"lol\"", "hejlol")
   end
 

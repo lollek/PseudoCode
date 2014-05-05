@@ -24,7 +24,7 @@ fibonacci with number, scope does
     #return (do fibonacci with number minus 1) plus (do fibonacci with number minus 2)
 
 
-write "Results: ", (do fibonacci with 3, 0), "\n"
+write "Results: ", (do fibonacci with 4, 0), "\n"
 
 
 

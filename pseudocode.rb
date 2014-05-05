@@ -15,7 +15,7 @@ class PseudoCode
   def initialize(scope=Scope.new)
     @parser = Parser.new("pseudo parser") do
       token(/#.*?$/)             # Comments
-      token(/".*?"/)             { |m| m.to_s.gsub('\n',"\n").gsub('\t',"\t").gsub('\r',"\r") } # Strings
+      token(/".*?"/)             { |m| m.to_s } # Strings
       token(/(-?\d+)*[a-zA-Z]+/) { |m| m }      # Variables, keywords, etc
       token(/-?\d+\.\d+/)        { |m| m.to_f } # Floats
       token(/-?\d+/)             { |m| m.to_i } # Integers
@@ -275,8 +275,8 @@ class PseudoCode
   end
 
   def log(state = true)
-    # @parser.logger.level = state ? Logger::DEBUG : Logger::WARN
-    @parser.logger.level = Logger::DEBUG
+    @parser.logger.level = state ? Logger::DEBUG : Logger::WARN
+    # @parser.logger.level = Logger::DEBUG
   end
 end
 
