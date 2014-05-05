@@ -1,45 +1,81 @@
-<program>::=<statements>
-<statements>::=<statements><statement> | EMPTY
+<program>::=<top_level_statements>
+<top_level_statements>::=
+  <top_level_statements> <func_decl> |
+  <top_level_statements> <statements> |
+  EMPTY
+<statements>::=
+  NEWLINE <statements> |
+  <statements> NEWLINE <statement> |
+  <statements> NEWLINE |
+  <statement>
 <statement>::=
-  (<assignment> | <output> | <input> | <condition> | <loop> |
-   <expression> | <func_decl> |<func_exec> | <return_stmt>) NEWLINE
-<assignment>::=
-  <variable> 'equals' <expression> |
-  'increase' <variable> 'by' <expression> |
-  'decrease' <variable> 'by' <expression> |
-  'multiply' <variable> 'by' <expression> |
-  'divide' <variable> 'by' <expression> |
-  <variable> 'holds' NEWLINE INDENT <expression_list> DEDENT
-<output>::='write' (<variable> | <expression> | <string> | <number>)
-<input>::='read to' <variable>
+  'write' <expression_list> |
+  'read to' <identifier> |
+  <condition> |
+  <while> |
+  <foreach> |
+  'return' <expression> |
+  <assignment> |
+  <func_exec> |
+  NEWLINE
 <condition>::=
-  'if' <bool_expr> 'then' NEWLINE INDENT <statements> DEDENT
+  'if' <expression> 'then' NEWLINE INDENT <statements> DEDENT
   ('else  if' <bool_expr> 'then' NEWLINE INDENT <statements> DEDENT)*
   ['else' NEWLINE INDENT <statements> DEDENT]
-<loop>::=<foreach> | <while>
-<foreach>::='for each' <variable> ('in' <variable> | <from>) 'do' NEWLINE INDENT <statements> DEDENT
-<while>::='while' <bool_expr> 'do' NEWLINE INDENT <statements> DEDENT
-<from>::='from' (<variable> | INTEGER) 'to' (<variable> | INTEGER)
-<expression>::=<bool_expr> | <aritm_expr> | <func_exec>
-<expression_list>::=(<expression> NEWLINE)*
-<bool_expr>::=
-  <expression> 'is' (less than | greater than) <expression> |
-  <expression> 'is' <expression> 'or' (more | less) |
-  <expression> 'is between' <expression> 'and' <expression> |
+<while>::='while' <expression> 'do' NEWLINE INDENT <statements> DEDENT
+<foreach>::='for each' <identifier> <foreach_list> 'do' NEWLINE INDENT <statements> DEDENT
+<assignment>::=
+  <identifer> 'equals' <expression> |
+  'increase' <identifier> 'by' <expression> |
+  'decrease' <identifier> 'by' <expression> |
+  'multiply' <identifier> 'by' <expression> |
+  'divide' <identifier> 'by' <expression>
+<expression>::=
   <expression> 'and' <expression> |
   <expression> 'or' <expression> |
   'not' <expression> |
+  <bool> |
+  <comparison>
+<comparison>
+  <comparable> 'is less than' <comparable> |
+  <comparable> 'is greater than' <comparable> |
+  <comparable> 'is' <comparable> 'or more' |
+  <comparable> 'is' <comparable> 'or less' |
+  <comparable> 'is between' <comparable> 'and' <comparable> |
+  <comparable> 'is' <comparable> |
+  <aritm_expr>
+<aritm_expr>::=<aritm_expr> ('plus' | 'minus') <term> | <term>
+<term>::=<term> ('times' | 'divided by') <factor> | <factor>
+<factor>::=
+  <factor> 'modulo' <factor> |
   '('<expression>')' |
-  <expression> |
-  BOOLEAN
-<aritm_expr>::=<term> ('plus' | 'minus') <expression> | <term>
-<term>::=<factor> | <factor> 'times' <factor> | <factor> 'divided by' <factor> | <factor> 'modulo' <factor>
-<factor>::=<number> | <variable> | '('<term>')'
-<func_decl>::=<func_name> <parameters> 'does' NEWLINE INDENT <statements> DEDENT
-<func_exec>::='do' <func_name> <parameters>
-<parameters>::='with' <variable_list> | EMPTY
-<variable_list>::=<variable>(',' <variable>)*
-<return_stmt>::='return' <expression> NEWLINE
-<number>::=FLOAT | INTEGER
-<variable>::=/^[a-zA-Z]+$/
-<comment>::=/#.*/ NEWLINE
+  FLOAT |
+  INTEGER |
+  <func_exec> |
+  <index> 'of' <indexable>
+  <identifier>
+  <string>
+  <array>
+<func_decl>::=<identifier> ['with' <identifier_list>] 'does' NEWLINE INDENT <statements> DEDENT
+<func_exec>::='do' <identifier> ['with' <expression_list>]
+
+<identifier_list>::=[<identifier_list> ','] <identifier>
+<expresssion_list>::=[<expression_list> ','] <expression>
+<foreach_list>::=
+  'in' <expression> |
+  'from' <foreach_elem> 'to' <foreach_elem>
+<foreach_elem>::=<identifier> | INTEGER
+<comparable>::=<aritm_expr> | <string> | <array>
+<index>::=
+  /^\d*(11|12|13)th$/ |
+  /^\d*1st$/ |
+  /^\d*2nd$/ |
+  /^\d*3rd$/ |
+  /^\d+th$/ |
+  /^<identifier>th$/ |
+  'last'
+<identifier>::=/^[a-zA-Z]+$/
+<string>::=/".*?"/
+<array>::='[' [<expression_list>] ']'
+<bool>::= 'true' | 'false'
+<comment>::=/#.*?$/
