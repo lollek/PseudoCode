@@ -26,17 +26,16 @@ class ProgramNode < SuperNode
   def initialize(statements, scope)
     @statements = statements
     initialize_global_variables(scope)
-    evaluate
   end
 
-  private
   def evaluate
     @statements.each do |s|
       if (s = s.evaluate(@@global_scope)).class == ReturnValue
-        return s.value.class == Fixnum ? s.value : 0
+        return s.value
+      else
+        s
       end
     end
-    0
   end
 end
 

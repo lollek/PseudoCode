@@ -24,14 +24,16 @@ class PseudoCode
       token(/ /)                 # Throw away spaces
 
       start(:program) do
-        match(:top_level_statements) { |a| ProgramNode.new(a, scope) }
+        match(:top_level_statements) { |a| ProgramNode.new(a, scope).evaluate }
       end
 
       # Statements only allowed in the global scope
       rule(:top_level_statements) do
+        match(:prompt, :expression, :newline) { |_, a, _| [a] }
         match(:top_level_statements, :func_decl) { |a, b| a << b }
         match(:top_level_statements, :statements) { |a, b| a + b }
         match(:empty) { [] }
+        #match(:prompt, :newline) { nil }
       end
 
       # Statements allowed in any scope
@@ -244,13 +246,13 @@ class PseudoCode
     end
   end
 
-  def parse(str)
+  def parse(str, interactive=false)
     str = str + "\n"
     if $DEBUG_MODE
-      @parser.parse(str)
+      @parser.parse(str, interactive)
     else
       begin
-        @parser.parse(str)
+        @parser.parse(str, interactive)
       rescue Parser::ParseError => e
         $stderr.puts "SyntaxError: #{e}"
       rescue => e
@@ -265,8 +267,7 @@ class PseudoCode
     begin
       while input = Readline.readline(">> ", true)
         break if input == "exit"
-        parse(input)
-        puts
+        puts parse(input, true)
       end
     rescue Interrupt
       puts
@@ -275,8 +276,8 @@ class PseudoCode
   end
 
   def log(state = true)
-    # @parser.logger.level = state ? Logger::DEBUG : Logger::WARN
-    @parser.logger.level = Logger::DEBUG
+    @parser.logger.level = state ? Logger::DEBUG : Logger::WARN
+    # @parser.logger.level = Logger::DEBUG
   end
 end
 

@@ -124,7 +124,6 @@ class Parser
   def tokenize(string)
     indentation = 0
     indent_stack = []
-    @tokens = []
     @string = string.clone
     until string.empty?
       # Unless any of the valid tokens of our language are the prefix of
@@ -165,7 +164,8 @@ class Parser
     end # until
   end
   
-  def parse(string)
+  def parse(string, interactive=false)
+    @tokens = interactive ? [:prompt] : []
     # First, split the string according to the "token" instructions given.
     # Afterwards @tokens contains all tokens that are to be parsed. 
     tokenize(string)
