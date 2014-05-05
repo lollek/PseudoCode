@@ -259,48 +259,27 @@ class AritmNode < SuperNode
   def evaluate(scope)
     lh = @lh.evaluate(scope)
     rh = @rh.evaluate(scope)
-    case @op
-    when :+ 
-      if lh.class == Array
-        if rh.class != Array then return lh << rh
-        else return lh + rh
-        end
-      elsif lh.class == String
-        if rh.class != Array
-          if rh.class == Fixnum then return lh << rh
-          else return lh + rh
+    begin
+      case @op
+      when :+
+        if lh.class == Array
+          if rh.class == Array
+            lh + rh
+          else
+            lh << rh
           end
-        else raise PseudoCodeError, "Cannot calculate '#{lh} plus #{rh}'"
+        else
+          lh + rh
         end
-      elsif [Fixnum, Float].include?(lh.class) and [Fixnum, Float].include?(rh.class) then return lh + rh
-      else raise PseudoCodeError, "Cannot calculate '#{lh} plus #{rh}'"
+      when :- then [Array, String].include?(lh.class) ? lh[0...-rh] : lh - rh
+      when :% then lh % rh
+      when :* then lh * rh
+      when :/ then lh / rh
       end
-    when :- then
-      if lh.class == Array then return minus(Array, Fixnum)
-      elsif lh.class == String then return minus(String, Fixnum)
-      else raise PseudoCodeError, "Cannot calculate '#{lh} minus #{rh}'"
-      end
-    when :% then
-      if [Fixnum, Float].include?(lh.class) and [Fixnum, Float].include?(rh.class) then return lh % rh
-      else raise PseudoCodeError, "Cannot calculate '#{lh} modulo #{rh}'"
-      end
-    when :* then lh * rh
-      if [Fixnum, Float].include?(rh.class) then return lh % rh
-      else raise PseudoCodeError, "Cannot calculate '#{lh} times #{rh}'"
-      end
-    when :/ then lh / rh
-      if [Fixnum, Float].include?(lh.class) and [Fixnum, Float].include?(rh.class) then return lh % rh
-      else raise PseudoCodeError, "Cannot calculate '#{lh} divided by #{rh}'"
-      end
+    rescue
+      raise PseudoCodeError, "Cannot calculate #{lh} #{@op} #{rh}"
     end
   end
-
-  def minus(victim, target)
-    if rh.class == target then return lh[0...-rh]
-    elsif rh.class == victim then return lh - rh
-    end
-  end
-
 end
 
 class ArrayNode < SuperNode
