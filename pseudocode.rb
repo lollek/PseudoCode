@@ -1,8 +1,15 @@
 #! /usr/bin/env ruby
 # -*- coding: utf-8 -*-
 
-require './rdparse.rb'
-require './nodes.rb'
+import_path =
+  if File.symlink?(__FILE__)
+    File.dirname(File.absolute_path(File.readlink(__FILE__)))
+  else
+    File.dirname(File.absolute_path(__FILE__))
+  end
+
+require "#{import_path}/rdparse.rb"
+require "#{import_path}/nodes.rb"
 
 class PseudoCode
   def initialize(scope=Scope.new)
@@ -225,8 +232,8 @@ class PseudoCode
       rule(:integer)      { match(Integer) }
       rule(:identifier)   { match(/^[a-zA-Z]+$/) }
       rule(:variable_get) { match(:identifier) { |m| LookupNode.new(m) } }
-      rule(:string)       { match(/^".*"$/) { |m| m.delete('"') } }
-      rule(:array) do
+      rule(:string)       { match(/".*"/) { |m| m.delete('"') } }
+      rule :array do
         match('[', :expression_list, ']') { |_, m, _| m }
         match('[', ']') { ArrayNode.new }
       end
@@ -268,8 +275,8 @@ class PseudoCode
   end
 
   def log(state = true)
-    @parser.logger.level = state ? Logger::DEBUG : Logger::WARN
-    # @parser.logger.level = Logger::DEBUG
+    # @parser.logger.level = state ? Logger::DEBUG : Logger::WARN
+    @parser.logger.level = Logger::DEBUG
   end
 end
 
