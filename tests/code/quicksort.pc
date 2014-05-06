@@ -1,0 +1,30 @@
+#! /usr/bin/env pseudocode
+
+quicksort with list does
+  if size of list is less than 2 then
+    return list
+
+  pivot equals 1st of list
+  low equals []
+  middle equals []
+  high equals []
+
+  for each element in list do
+    if element is less than pivot then
+      increase low by element
+    else if element is greater than pivot then
+      increase high by element
+    else
+      increase middle by element
+
+  returnList equals []
+  for each element in do quicksort with low do
+    increase returnList by element
+  for each element in middle do
+    increase returnList by element
+  for each element in do quicksort with high do
+    increase returnList by element
+  return returnList
+
+
+write do quicksort with [ 1, 5, 3, 2, 4, 4, 9, 0 ]
