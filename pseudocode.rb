@@ -144,6 +144,7 @@ class PseudoCode
         match(:integer)
         match(:func_exec)
         match(:index, 'of', :indexable) { |index, _, list| IndexNode.new(list, index) }
+        match('size', 'of', :indexable) { |_, _, list| LengthNode.new(list) }
         match(:variable_get)
         match(:string)
         match(:array)

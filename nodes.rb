@@ -336,6 +336,20 @@ class IndexNode < SuperNode
   end
 end
 
+class LengthNode < SuperNode
+  def initialize(list)
+    @list = list
+  end
+  def evaluate(scope)
+    list = @list.evaluate_all(scope)
+    begin
+      list.length
+    rescue
+      raise PseudoCodeError, "#{list} does not have a length"
+    end
+  end
+end
+
 class FunctionDeclarationNode < SuperNode
   def initialize(name, stmts, params=[])
     @name, @parameters, @statements = name, params, stmts
@@ -384,7 +398,6 @@ class ReturnValue
   end
 
   def evaluate(scope)
-    @value = @value.evaluate_all(scope)
-    self
+    ReturnValue.new(@value.evaluate_all(scope))
   end
 end
