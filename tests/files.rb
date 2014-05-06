@@ -18,7 +18,8 @@ class TestClass < PCTest
 
   def test_longer_functions
     assert_file("fibonacci_iter.pc", "55 equals 55!\n")
-    #assert_file("realfun.pc", "55")
+    assert_file("fibonacci_recursive.pc", "55")
+    assert_file("quicksort.pc", "[0, 1, 2, 3, 4, 4, 5, 9]")
     assert_output("write \"hej\", \"lol\"", "hejlol")
   end
 
