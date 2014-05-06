@@ -1,0 +1,11 @@
+#! /usr/bin/env pseudocode
+
+fibonacci with number does
+  if number is 0 or less then
+    return 0
+  else if number is 1 then
+    return 1
+  else
+    return (do fibonacci with number minus 1) plus (do fibonacci with number minus 2)
+
+write do fibonacci with 10
