@@ -31,11 +31,8 @@ class ProgramNode < SuperNode
   def evaluate
     return_value = nil
     @statements.each do |s|
-      if (s = s.evaluate_all(@@global_scope)).class == ReturnValue
-        return s.value
-      else
-        return_value = s
-      end
+      return_value = s.evaluate_all(@@global_scope)
+      return return_value.value if return_value.class == ReturnValue
     end
     return_value
   end
@@ -58,9 +55,9 @@ class Scope
   end
 
   def get_var(name)
-    if @variables.include?(name) 
+    if @variables.include?(name)
       @variables[name]
-    elsif @parent 
+    elsif @parent
       @parent.get_var(name)
     else 
       nil
@@ -119,15 +116,11 @@ class ConditionNode < SuperNode
   def evaluate(parent_scope)
     scope = Scope.new(parent_scope)
     if not [0, false].include? @expression.evaluate(scope)
-      @statements.each do |s| 
-        if (s = s.evaluate(scope)).class == ReturnValue
-          return s
-        end
+      @statements.each do |s|
+        return s if (s = s.evaluate(scope)).class == ReturnValue
       end
-    elsif not [0, false].include? @elseif != nil
-      if (s = @elseif.evaluate(parent_scope)).class == ReturnValue
-        return s
-      end
+    elsif not [0, false, nil].include? (s = @elseif)
+      return s if (s = @elseif.evaluate(parent_scope)).class == ReturnValue
     end
     nil
   end
@@ -141,10 +134,8 @@ class WhileNode < SuperNode
   def evaluate(parent_scope)
     scope = Scope.new(parent_scope)
     while @expression.evaluate(scope)
-      @statements.each do |s| 
-        if (s = s.evaluate(scope)).class == ReturnValue
-          return s
-        end
+      @statements.each do |s|
+        return s if (s = s.evaluate(scope)).class == ReturnValue
       end
     end
     nil
@@ -166,9 +157,7 @@ class ForEachNode < SuperNode
     end.each do |elem|
       AssignmentNode.new(@var, elem).evaluate(scope)
       @statements.each do |s|
-        if (s = s.evaluate(scope)).class == ReturnValue
-          return s
-        end
+        return s if (s = s.evaluate(scope)).class == ReturnValue
       end
     end
     nil
@@ -211,21 +200,25 @@ class ComparisonNode < SuperNode
     lh = @lh.evaluate(scope)
     rh = @rh.evaluate(scope)
     middle = @middle.evaluate(scope)
-    if @op == :== then
-      return lh == rh
-    elsif lh.class == Array or rh.class == Array
-      raise PseudoCodeError, "Cannot compare #{lh} #{@op} #{rh}"
-    end
 
-    case @op
-    when :not then not lh
-    when :and then lh && rh
-    when :or then lh || rh
-    when :< then lh < rh
-    when :> then lh > rh
-    when :<= then lh <= rh
-    when :>= then lh >= rh
-    when :between then middle.between?([lh,rh].min, [lh, rh].max)
+    begin
+      case @op
+      when :not then not lh
+      when :and then lh && rh
+      when :or then lh || rh
+      when :== then lh == rh
+      when :< then lh < rh
+      when :> then lh > rh
+      when :<= then lh <= rh
+      when :>= then lh >= rh
+      when :between then middle.between?([lh,rh].min, [lh, rh].max)
+      end
+    rescue
+      if @op == :between
+        raise PseudoCodeError, "Cannot compare '#{lh}' <= #{middle} <= '#{rh}'"
+      else
+        raise PseudoCodeError, "Cannot compare '#{lh}' #{@op} '#{rh}'"
+      end
     end
   end
   def set_lh(value)
@@ -253,8 +246,7 @@ class WriteNode < SuperNode
   end
 
   def prepare(data, scope)
-    data = data.evaluate_all(scope)
-    if data.class == String
+    if (data = data.evaluate_all(scope)).class == String
       data.gsub('\n',"\n").gsub('\t',"\t").gsub('\r',"\r")
     else
       data
@@ -288,7 +280,7 @@ class ArrayNode < SuperNode
   def initialize(values=[])
     @values = values
   end
-  
+
   def evaluate(scope)
     @values
   end
@@ -315,13 +307,14 @@ class IndexNode < SuperNode
   def evaluate(scope)
     object = @object.evaluate(scope)
     raise PseudoCodeError, "Cannot use index on empty object" if object.empty?
-    index = 
+
+    index =
       if @index == 'last' and object.methods.include?(:length)
-        object.length 
+        object.length
       elsif @index.class == String
         @index.to_i
       else 
-        @index.evaluate(scope) 
+        @index.evaluate(scope)
       end
     raise PseudoCodeError, "Cannot use '#{index}' as index" if not index.class == Fixnum
 
@@ -379,13 +372,11 @@ class FunctionNode < SuperNode
   def evaluate(parent_scope, param_values=[])
     raise PseudoCodeError, "Parameter mismatch! Expected #{@param_names.length}, found #{param_values.length}" unless @param_names.length == param_values.length
     scope = Scope.new
-    @param_names.each_index do |i| 
+    @param_names.each_index do |i|
       AssignmentNode.new(@param_names[i], param_values[i]).evaluate(scope)
     end
-    @statements.each do |s| 
-      if (s = s.evaluate(scope)).class == ReturnValue
-        return s.value
-      end
+    @statements.each do |s|
+      return s.value if (s = s.evaluate(scope)).class == ReturnValue
     end
     nil
   end
