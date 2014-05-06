@@ -271,8 +271,8 @@ class AritmNode < SuperNode
     rh = @rh.evaluate_all(scope)
     begin
       case @op
-      when :+ then lh.class == Array ? lh << rh : lh + rh
-      when :- then [Array, String].include?(lh.class) ? lh[0...-rh] : lh - rh
+      when :+ then lh.class == Array ? lh.dup << rh : lh + rh
+      when :- then [Array, String].include?(lh.class) ? lh.dup[0...-rh] : lh - rh
       when :% then lh % rh
       when :* then lh * rh
       when :/ then lh / rh
