@@ -240,7 +240,7 @@ class PseudoCode
       rule(:identifier)   { match(/^[a-zA-Z]+$/) }
       rule(:variable_get) { match(:identifier) { |m| LookupNode.new(m) } }
       rule(:string)       { match(/".*"/) { |m| m.delete('"') } }
-      rule :array do
+      rule(:array) do
         match('[', :expression_list, ']') { |_, m, _| m }
         match('[', ']') { ArrayNode.new }
       end

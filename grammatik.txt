@@ -20,7 +20,7 @@
   NEWLINE
 <condition>::=
   'if' <expression> 'then' NEWLINE INDENT <statements> DEDENT
-  ('else  if' <bool_expr> 'then' NEWLINE INDENT <statements> DEDENT)*
+  ('else  if' <expression> 'then' NEWLINE INDENT <statements> DEDENT)*
   ['else' NEWLINE INDENT <statements> DEDENT]
 <while>::='while' <expression> 'do' NEWLINE INDENT <statements> DEDENT
 <foreach>::='for each' <identifier> <foreach_list> 'do' NEWLINE INDENT <statements> DEDENT
