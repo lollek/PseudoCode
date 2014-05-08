@@ -184,6 +184,7 @@ class Parser
       i = (i = @tokens.reverse.index(:newline)).nil? ? 0 : -i
       @tokens.shift if @tokens.first == :newline
       @tokens.pop if @tokens.last == :newline      
+      @tokens.shift if @tokens.first == :prompt
       raise ParseError, "Unexpected '#{@tokens.last}' in '#{@tokens[i..-1].join(' ')}'"
     end
     return result

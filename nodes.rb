@@ -196,11 +196,11 @@ class ComparisonNode < SuperNode
   def initialize(lh, op, rh=nil, middle=nil)
     @lh, @op, @rh, @middle = lh, op, rh, middle
   end
+
   def evaluate(scope)
     lh = @lh.evaluate(scope)
     rh = @rh.evaluate(scope)
     middle = @middle.evaluate(scope)
-
     begin
       case @op
       when :not then not lh
