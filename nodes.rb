@@ -88,10 +88,18 @@ class AssignmentNode < SuperNode
     value = @value.evaluate_all(scope)
     case @op
     when nil then scope.set_var(@name, value)
-    when :+ then scope.set_var(@name, AritmNode.new(scope.get_var(@name), :+, value).evaluate(scope))
-    when :- then scope.set_var(@name, AritmNode.new(scope.get_var(@name), :-, value).evaluate(scope))
-    when :* then scope.set_var(@name, AritmNode.new(scope.get_var(@name), :*, value).evaluate(scope))
-    when :/ then scope.set_var(@name, AritmNode.new(scope.get_var(@name), :/, value).evaluate(scope))
+    when :+
+      scope.set_var(@name, AritmNode.new(
+        scope.get_var(@name), :+, value).evaluate(scope))
+    when :-
+      scope.set_var(@name, AritmNode.new(
+        scope.get_var(@name), :-, value).evaluate(scope))
+    when :*
+      scope.set_var(@name, AritmNode.new(
+        scope.get_var(@name), :*, value).evaluate(scope))
+    when :/
+      scope.set_var(@name, AritmNode.new(
+        scope.get_var(@name), :/, value).evaluate(scope))
     end
   end
 end
@@ -263,11 +271,16 @@ class AritmNode < SuperNode
     rh = @rh.evaluate_all(scope)
     begin
       case @op
-      when :+ then lh.class == Array ? lh.dup << rh : lh + rh
-      when :- then [Array, String].include?(lh.class) ? lh.dup[0...-rh] : lh - rh
-      when :% then lh % rh
-      when :* then lh * rh
-      when :/ then lh / rh
+      when :+
+        lh.class == Array ? lh.dup << rh : lh + rh
+      when :-
+        [Array, String].include?(lh.class) ? lh.dup[0...-rh] : lh - rh
+      when :%
+        lh % rh
+      when :*
+        lh * rh
+      when :/
+        lh / rh
       end
     rescue
       raise PseudoCodeError, "Cannot calculate #{lh} #{@op} #{rh}"
@@ -316,7 +329,9 @@ class IndexNode < SuperNode
       else 
         @index.evaluate(scope)
       end
-    raise PseudoCodeError, "Cannot use '#{index}' as index" if not index.class == Fixnum
+    if not index.class == Fixnum
+      raise PseudoCodeError, "Cannot use '#{index}' as index"
+    end
 
     if object.methods.include?(:[])
       if (index > 0) && (not object[index -1].nil?)
@@ -360,7 +375,9 @@ class FunctionExecutionNode < SuperNode
   end
 
   def evaluate(scope)
-    @@global_scope.get_func(@name).evaluate(scope, @parameters.evaluate_all(scope))
+    @@global_scope.get_func(@name).evaluate(
+      scope, @parameters.evaluate_all(scope)
+    )
   end
 end
 
@@ -370,7 +387,10 @@ class FunctionNode < SuperNode
   end
 
   def evaluate(parent_scope, param_values=[])
-    raise PseudoCodeError, "Parameter mismatch! Expected #{@param_names.length}, found #{param_values.length}" unless @param_names.length == param_values.length
+    if not @param_names.length == param_values.length
+      raise PseudoCodeError, "Parameter mismatch! Expected " + 
+        "#{@param_names.length}, found #{param_values.length}"
+    end
     scope = Scope.new
     @param_names.each_index do |i|
       AssignmentNode.new(@param_names[i], param_values[i]).evaluate(scope)

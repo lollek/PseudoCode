@@ -59,14 +59,14 @@ class PseudoCode
         match(:func_exec)
         match(:newline)
       end
-
+      
       rule(:condition) do
         match('if', :expression, 'then', :newline,
               :indent, :statements, :dedent, :condition_else) {
           |_, if_expr, _, _, _, if_stmts, _, elseif|
           ConditionNode.new(if_expr, if_stmts, elseif) }
       end
-
+      
       rule(:condition_else) do
         match(:newline, 'else', 'if', :expression, 'then', :newline,
               :indent, :statements, :dedent, :condition_else) {
@@ -76,13 +76,13 @@ class PseudoCode
           |_, _, _, _, stmts, _| ConditionNode.new(true, stmts) }
         match(:empty)
       end
-
+      
       rule(:while) do
         match('while', :expression, 'do', :newline,
               :indent, :statements, :dedent) { |_, expr, _, _ , _, stmts, _|
           WhileNode.new(expr, stmts) }
       end
-
+      
       rule(:foreach) do
         match('for', 'each', :identifier, :foreach_list, 'do', :newline,
               :indent, :statements, :dedent) {
@@ -96,7 +96,7 @@ class PseudoCode
         match(:assign_mod, :identifier, 'by', :expression) { |mod, lh, _, rh|
           AssignmentNode.new(lh, rh, mod) }
       end
-
+      
       rule(:expression) do
         match(:expression, :and_or, :expression) { |lh, sym, rh|
           ComparisonNode.new(lh, sym, rh) }
@@ -104,7 +104,7 @@ class PseudoCode
         match(:bool)
         match(:comparison)
       end
-
+      
       rule(:comparison) do
         match(:comparable, 'is', :comparison_tail) { |e, _, comp_node|
           comp_node.set_lh(e) }
@@ -124,26 +124,27 @@ class PseudoCode
           ComparisonNode.new(e, :between, f, nil); end
         match(:comparable) { |e| ComparisonNode.new(nil, :==, e) }
       end
-
+      
       rule(:aritm_expr) do
         match(:aritm_expr, :plus_minus, :term) { |lh, mod, rh|
           AritmNode.new(lh, mod, rh) }
         match(:term)
       end
-
+      
       rule(:term) do
         match(:term, :mult_div, :factor) { |lh, mod, rh|
           AritmNode.new(lh, mod, rh) }
         match(:factor)
       end
-        
+      
       rule(:factor) do
         match(:factor, 'modulo', :factor) { |a, _, b| AritmNode.new(a, :%, b) }
         match('(', :expression, ')') { |_, m, _| m }
         match(:float)
         match(:integer)
         match(:func_exec)
-        match(:index, 'of', :indexable) { |index, _, list| IndexNode.new(list, index) }
+        match(:index, 'of', :indexable) do |index, _, list| 
+          IndexNode.new(list, index); end
         match('size', 'of', :indexable) { |_, _, list| LengthNode.new(list) }
         match(:variable_get)
         match(:string)
@@ -159,14 +160,14 @@ class PseudoCode
               :indent, :statements, :dedent) do |name, _, _, _, stmts, _|
           FunctionDeclarationNode.new(name, stmts); end
       end
-
+      
       rule(:func_exec) do
         match('do', :identifier, 'with', :expression_list) do 
           |_, name, _, params|
           FunctionExecutionNode.new(name, params); end
         match('do', :identifier) { |_, name| FunctionExecutionNode.new(name) }
       end
-
+      
       # Lists
       rule(:identifier_list) do
         match(:identifier_list, ',', :identifier) { |a, _, b| a << b }
@@ -177,15 +178,15 @@ class PseudoCode
         match(:expression_list, ',', :expression) { |a, _, b| a << b }
         match(:expression) { |m| ArrayNode.new([m]) }
       end
-
+      
       rule(:foreach_list) do
         match('in', :expression) { |_, iterator| iterator }
-        match('from', :foreach_elem, 'to', :foreach_elem) { |_, start, _, stop|
-          FromNode.new(start, stop) }
+        match('from', :foreach_elem, 'to', :foreach_elem) do |_, start, _, stop|
+          FromNode.new(start, stop); end
       end
-
+        
       # Collections
-      rule(:foreach_elem) do
+        rule(:foreach_elem) do
         match(:variable_get)
         match(:integer)
       end
@@ -283,7 +284,6 @@ class PseudoCode
 
   def log(state = true)
     @parser.logger.level = state ? Logger::DEBUG : Logger::WARN
-    # @parser.logger.level = Logger::DEBUG
   end
 end
 
