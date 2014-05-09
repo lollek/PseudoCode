@@ -1,0 +1,19 @@
+#! /bin/bash
+set -e
+
+if [[ $UID ]]; then
+  echo -e "Warning: You probably need to run this as root!\n"
+fi
+
+prefix="/usr/local"
+
+echo "Creating $prefix/lib/pseudocode"
+mkdir $prefix/lib/pseudocode
+
+echo "Copying data to /usr/local/lib/pseudocode"
+cp -r $(dirname $0)/* -t $prefix/lib/pseudocode
+
+echo "Creating symlink at /usr/local/bin"
+ln -s $prefix/lib/pseudocode/pseudocode.rb $prefix/bin/pseudocode
+
+echo "Done"
